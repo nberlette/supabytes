@@ -26,6 +26,7 @@ interface HeaderProps {
   onRefresh: () => void
   breadcrumbs: BreadcrumbItemType[]
   onNavigate: (folderId: string | null) => void
+  currentView?: "files" | "shared" | "trash" | "favorites"
 }
 
 export function Header({
@@ -38,12 +39,15 @@ export function Header({
   onRefresh,
   breadcrumbs,
   onNavigate,
+  currentView = "files",
 }: HeaderProps) {
   const [uploadOpen, setUploadOpen] = useState(false)
   const [folderOpen, setFolderOpen] = useState(false)
 
+  const showUploadActions = currentView === "files"
+
   return (
-    <header className="bg-white border-b px-4 py-3">
+    <header className="bg-card border-b border-border px-4 py-3">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenuClick}>
           <Menu className="h-5 w-5" />
@@ -60,10 +64,16 @@ export function Header({
                     <BreadcrumbPage>{item.name}</BreadcrumbPage>
                   ) : (
                     <BreadcrumbLink
-                      href={"#/" + all.slice(0, index + 1).map((i) => i.name).join("/")}
+                      href={
+                        "#/" +
+                        all
+                          .slice(0, index + 1)
+                          .map((i) => i.name)
+                          .join("/")
+                      }
                       onClick={(e) => {
-                        e.preventDefault();
-                        onNavigate(item.id);
+                        e.preventDefault()
+                        onNavigate(item.id)
                       }}
                     >
                       {item.name}
@@ -78,7 +88,7 @@ export function Header({
         {/* Search */}
         <div className="flex-1 max-w-md">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search files..."
               value={searchQuery}
@@ -94,7 +104,7 @@ export function Header({
             <RefreshCw className="h-4 w-4" />
           </Button>
 
-          <div className="hidden sm:flex items-center border rounded-md">
+          <div className="hidden sm:flex items-center border border-border rounded-md">
             <Button
               variant={viewMode === "grid" ? "secondary" : "ghost"}
               size="icon"
@@ -113,15 +123,19 @@ export function Header({
             </Button>
           </div>
 
-          <Button variant="outline" size="sm" onClick={() => setFolderOpen(true)} className="hidden sm:flex">
-            <FolderPlus className="h-4 w-4 mr-2" />
-            New Folder
-          </Button>
+          {showUploadActions && (
+            <>
+              <Button variant="outline" size="sm" onClick={() => setFolderOpen(true)} className="hidden sm:flex">
+                <FolderPlus className="h-4 w-4 mr-2" />
+                New Folder
+              </Button>
 
-          <Button size="sm" onClick={() => setUploadOpen(true)}>
-            <Upload className="h-4 w-4 mr-2" />
-            Upload
-          </Button>
+              <Button size="sm" onClick={() => setUploadOpen(true)}>
+                <Upload className="h-4 w-4 mr-2" />
+                Upload
+              </Button>
+            </>
+          )}
         </div>
       </div>
 

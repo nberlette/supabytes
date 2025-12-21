@@ -18,24 +18,24 @@ export async function POST(request: Request) {
   if (fileIds && fileIds.length > 0) {
     const { error } = await supabase
       .from("files")
-      .update({ is_trashed: true, trashed_at: new Date().toISOString() })
+      .update({ is_trashed: false, trashed_at: null })
       .in("id", fileIds)
       .eq("user_id", user.id)
 
     if (error) {
-      errors.push(`File trash error: ${error.message}`)
+      errors.push(`File restore error: ${error.message}`)
     }
   }
 
   if (folderIds && folderIds.length > 0) {
     const { error } = await supabase
       .from("folders")
-      .update({ is_trashed: true, trashed_at: new Date().toISOString() })
+      .update({ is_trashed: false, trashed_at: null })
       .in("id", folderIds)
       .eq("user_id", user.id)
 
     if (error) {
-      errors.push(`Folder trash error: ${error.message}`)
+      errors.push(`Folder restore error: ${error.message}`)
     }
   }
 

@@ -9,6 +9,7 @@ import { FolderRow } from "./folder-row"
 import { EmptyState } from "./empty-state"
 import { SelectionToolbar } from "./selection-toolbar"
 import { MoveDialog } from "./move-dialog"
+import { ConfirmDialog } from "./confirm-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
@@ -22,6 +23,7 @@ interface FileExplorerProps {
   onNavigate: (folderId: string | null) => void
   onRefresh: () => void
   userId: string
+  currentView?: "files" | "shared" | "trash" | "favorites"
 }
 
 export function FileExplorer({
@@ -33,19 +35,21 @@ export function FileExplorer({
   onNavigate,
   onRefresh,
   userId,
+  currentView = "files",
 }: FileExplorerProps) {
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set())
   const [selectedFolders, setSelectedFolders] = useState<Set<string>>(new Set())
   const [moveDialogOpen, setMoveDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isMoving, setIsMoving] = useState(false)
-  // Track single item moves from context menu
   const [singleMoveItem, setSingleMoveItem] = useState<{
     type: "file" | "folder"
     id: string
   } | null>(null)
 
   const selectedCount = selectedFiles.size + selectedFolders.size
+  const isTrashView = currentView === "trash"
 
   const handleFileSelect = useCallback((id: string, selected: boolean) => {
     setSelectedFiles((prev) => {
@@ -122,12 +126,10 @@ export function FileExplorer({
   const handleBulkDelete = useCallback(async () => {
     if (selectedCount === 0) return
 
-    const confirmed = window.confirm(`Delete ${selectedCount} item(s)? This cannot be undone.`)
-    if (!confirmed) return
-
     setIsDeleting(true)
     try {
-      const res = await fetch("/api/files/bulk-delete", {
+      const endpoint = isTrashView ? "/api/files/permanent-delete" : "/api/files/bulk-delete"
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -137,7 +139,9 @@ export function FileExplorer({
       })
 
       if (res.ok) {
-        toast.success(`Deleted ${selectedCount} item(s)`)
+        toast.success(
+          isTrashView ? `Permanently deleted ${selectedCount} item(s)` : `Moved ${selectedCount} item(s) to trash`,
+        )
         clearSelection()
         onRefresh()
       } else {
@@ -148,6 +152,33 @@ export function FileExplorer({
       toast.error("Failed to delete items")
     } finally {
       setIsDeleting(false)
+      setDeleteDialogOpen(false)
+    }
+  }, [selectedFiles, selectedFolders, selectedCount, clearSelection, onRefresh, isTrashView])
+
+  const handleBulkRestore = useCallback(async () => {
+    if (selectedCount === 0) return
+
+    try {
+      const res = await fetch("/api/files/restore", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileIds: Array.from(selectedFiles),
+          folderIds: Array.from(selectedFolders),
+        }),
+      })
+
+      if (res.ok) {
+        toast.success(`Restored ${selectedCount} item(s)`)
+        clearSelection()
+        onRefresh()
+      } else {
+        const data = await res.json()
+        toast.error(data.errors?.[0] || "Failed to restore items")
+      }
+    } catch {
+      toast.error("Failed to restore items")
     }
   }, [selectedFiles, selectedFolders, selectedCount, clearSelection, onRefresh])
 
@@ -155,7 +186,6 @@ export function FileExplorer({
     async (targetFolderId: string | null) => {
       setIsMoving(true)
 
-      // Determine what to move
       const fileIds = singleMoveItem?.type === "file" ? [singleMoveItem.id] : Array.from(selectedFiles)
       const folderIds = singleMoveItem?.type === "folder" ? [singleMoveItem.id] : Array.from(selectedFolders)
 
@@ -217,10 +247,7 @@ export function FileExplorer({
     return (
       <div className="flex-1 p-6 overflow-auto">
         {viewMode === "grid" ? (
-          <div
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 
-              lg:grid-cols-5 xl:grid-cols-6 gap-4"
-          >
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             {Array.from({ length: 12 }).map((_, i) => (
               <Skeleton key={i} className="aspect-square rounded-lg" />
             ))}
@@ -237,7 +264,7 @@ export function FileExplorer({
   }
 
   if (files.length === 0 && folders.length === 0) {
-    return <EmptyState currentFolder={currentFolder} onRefresh={onRefresh} />
+    return <EmptyState currentFolder={currentFolder} onRefresh={onRefresh} currentView={currentView} />
   }
 
   const excludeFolderIds = singleMoveItem?.type === "folder" ? [singleMoveItem.id] : Array.from(selectedFolders)
@@ -248,15 +275,9 @@ export function FileExplorer({
         <div
           className="flex-1 p-6 overflow-auto"
           onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault()
-            // Drop on background moves to root of current folder
-          }}
+          onDrop={(e) => e.preventDefault()}
         >
-          <div
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 
-              lg:grid-cols-5 xl:grid-cols-6 gap-4"
-          >
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             {folders.map((folder) => (
               <FolderCard
                 key={folder.id}
@@ -267,6 +288,7 @@ export function FileExplorer({
                 onSelect={handleFolderSelect}
                 onDrop={handleDropOnFolder}
                 onMove={handleSingleFolderMove}
+                isTrashView={isTrashView}
               />
             ))}
             {files.map((file) => (
@@ -278,6 +300,7 @@ export function FileExplorer({
                 isSelected={selectedFiles.has(file.id)}
                 onSelect={handleFileSelect}
                 onMove={handleSingleFileMove}
+                isTrashView={isTrashView}
               />
             ))}
           </div>
@@ -286,10 +309,12 @@ export function FileExplorer({
         <SelectionToolbar
           selectedCount={selectedCount}
           onClear={clearSelection}
-          onDelete={handleBulkDelete}
+          onDelete={() => setDeleteDialogOpen(true)}
           onMove={openBulkMoveDialog}
           onDownload={handleBulkDownload}
           isDeleting={isDeleting}
+          isTrashView={isTrashView}
+          onRestore={handleBulkRestore}
         />
 
         <MoveDialog
@@ -299,6 +324,21 @@ export function FileExplorer({
           excludeFolderIds={excludeFolderIds}
           isMoving={isMoving}
         />
+
+        <ConfirmDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          title={isTrashView ? "Permanently Delete?" : "Move to Trash?"}
+          description={
+            isTrashView
+              ? `This will permanently delete ${selectedCount} item(s). This action cannot be undone.`
+              : `This will move ${selectedCount} item(s) to trash. You can restore them later.`
+          }
+          confirmLabel={isTrashView ? "Delete Forever" : "Move to Trash"}
+          onConfirm={handleBulkDelete}
+          isLoading={isDeleting}
+          variant={isTrashView ? "destructive" : "default"}
+        />
       </>
     )
   }
@@ -306,29 +346,18 @@ export function FileExplorer({
   return (
     <>
       <div className="flex-1 p-6 overflow-auto">
-        <div className="bg-white rounded-lg border overflow-hidden">
+        <div className="bg-card rounded-lg border border-border overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="border-b bg-slate-50">
+              <tr className="border-b border-border bg-muted/50">
                 <th className="px-4 py-3 w-10">
                   <Checkbox checked={allSelected} onCheckedChange={handleSelectAll} />
                 </th>
-                <th
-                  className="text-left px-4 py-3 text-sm font-medium 
-                    text-slate-600"
-                >
-                  Name
-                </th>
-                <th
-                  className="text-left px-4 py-3 text-sm font-medium 
-                    text-slate-600 hidden sm:table-cell"
-                >
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Name</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground hidden sm:table-cell">
                   Size
                 </th>
-                <th
-                  className="text-left px-4 py-3 text-sm font-medium 
-                    text-slate-600 hidden md:table-cell"
-                >
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground hidden md:table-cell">
                   Modified
                 </th>
                 <th className="w-12"></th>
@@ -345,6 +374,7 @@ export function FileExplorer({
                   onSelect={handleFolderSelect}
                   onDrop={handleDropOnFolder}
                   onMove={handleSingleFolderMove}
+                  isTrashView={isTrashView}
                 />
               ))}
               {files.map((file) => (
@@ -355,6 +385,7 @@ export function FileExplorer({
                   userId={userId}
                   isSelected={selectedFiles.has(file.id)}
                   onSelect={handleFileSelect}
+                  isTrashView={isTrashView}
                 />
               ))}
             </tbody>
@@ -365,10 +396,12 @@ export function FileExplorer({
       <SelectionToolbar
         selectedCount={selectedCount}
         onClear={clearSelection}
-        onDelete={handleBulkDelete}
+        onDelete={() => setDeleteDialogOpen(true)}
         onMove={openBulkMoveDialog}
         onDownload={handleBulkDownload}
         isDeleting={isDeleting}
+        isTrashView={isTrashView}
+        onRestore={handleBulkRestore}
       />
 
       <MoveDialog
@@ -377,6 +410,21 @@ export function FileExplorer({
         onMove={handleBulkMove}
         excludeFolderIds={excludeFolderIds}
         isMoving={isMoving}
+      />
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title={isTrashView ? "Permanently Delete?" : "Move to Trash?"}
+        description={
+          isTrashView
+            ? `This will permanently delete ${selectedCount} item(s). This action cannot be undone.`
+            : `This will move ${selectedCount} item(s) to trash. You can restore them later.`
+        }
+        confirmLabel={isTrashView ? "Delete Forever" : "Move to Trash"}
+        onConfirm={handleBulkDelete}
+        isLoading={isDeleting}
+        variant={isTrashView ? "destructive" : "default"}
       />
     </>
   )

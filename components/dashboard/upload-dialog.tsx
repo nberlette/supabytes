@@ -2,11 +2,11 @@
 
 import type React from "react"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Upload, X, FileIcon, CheckCircle2 } from "lucide-react"
+import { Upload, X, FileIcon, CheckCircle2, AlertCircle } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 import { formatFileSize } from "@/lib/utils/format"
@@ -20,46 +20,61 @@ interface UploadDialogProps {
 }
 
 interface UploadFile {
+  id: string // Add unique ID to track files properly
   file: File
   progress: number
   status: "pending" | "uploading" | "complete" | "error"
   error?: string
 }
 
+function generateFileId(file: File): string {
+  return `${file.name}-${file.size}-${file.lastModified}-${Math.random()}`
+}
+
 export function UploadDialog({ open, onOpenChange, currentFolder, onSuccess }: UploadDialogProps) {
   const [files, setFiles] = useState<UploadFile[]>([])
   const [isDragging, setIsDragging] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const uploadingRef = useRef(false)
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-
-    const droppedFiles = Array.from(e.dataTransfer.files)
-    const newFiles: UploadFile[] = droppedFiles.map((file) => ({
+  const addFiles = useCallback((newFiles: File[]) => {
+    const uploadFiles: UploadFile[] = newFiles.map((file) => ({
+      id: generateFileId(file),
       file,
       progress: 0,
       status: "pending",
     }))
-    setFiles((prev) => [...prev, ...newFiles])
+    setFiles((prev) => [...prev, ...uploadFiles])
   }, [])
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      setIsDragging(false)
+
+      const droppedFiles = Array.from(e.dataTransfer.files)
+      addFiles(droppedFiles)
+    },
+    [addFiles],
+  )
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return
 
     const selectedFiles = Array.from(e.target.files)
-    const newFiles: UploadFile[] = selectedFiles.map((file) => ({
-      file,
-      progress: 0,
-      status: "pending",
-    }))
-    setFiles((prev) => [...prev, ...newFiles])
+    addFiles(selectedFiles)
+    e.target.value = ""
   }
 
-  const removeFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index))
+  const removeFile = (id: string) => {
+    setFiles((prev) => prev.filter((f) => f.id !== id))
   }
 
   const uploadFiles = async () => {
+    if (uploadingRef.current) return
+    uploadingRef.current = true
+    setIsUploading(true)
+
     const supabase = createClient()
     const {
       data: { user },
@@ -67,14 +82,15 @@ export function UploadDialog({ open, onOpenChange, currentFolder, onSuccess }: U
 
     if (!user) {
       toast.error("You must be logged in to upload files")
+      uploadingRef.current = false
+      setIsUploading(false)
       return
     }
 
-    for (let i = 0; i < files.length; i++) {
-      const uploadFile = files[i]
-      if (uploadFile.status !== "pending") continue
+    const pendingFiles = files.filter((f) => f.status === "pending")
 
-      setFiles((prev) => prev.map((f, idx) => (idx === i ? { ...f, status: "uploading", progress: 0 } : f)))
+    for (const uploadFile of pendingFiles) {
+      setFiles((prev) => prev.map((f) => (f.id === uploadFile.id ? { ...f, status: "uploading", progress: 10 } : f)))
 
       const storagePath = `${user.id}/${Date.now()}-${uploadFile.file.name}`
 
@@ -85,10 +101,12 @@ export function UploadDialog({ open, onOpenChange, currentFolder, onSuccess }: U
 
       if (uploadError) {
         setFiles((prev) =>
-          prev.map((f, idx) => (idx === i ? { ...f, status: "error", error: uploadError.message } : f)),
+          prev.map((f) => (f.id === uploadFile.id ? { ...f, status: "error", error: uploadError.message } : f)),
         )
         continue
       }
+
+      setFiles((prev) => prev.map((f) => (f.id === uploadFile.id ? { ...f, progress: 70 } : f)))
 
       // Create file record in database
       const { error: dbError } = await supabase.from("files").insert({
@@ -101,23 +119,29 @@ export function UploadDialog({ open, onOpenChange, currentFolder, onSuccess }: U
       })
 
       if (dbError) {
-        setFiles((prev) => prev.map((f, idx) => (idx === i ? { ...f, status: "error", error: dbError.message } : f)))
+        setFiles((prev) =>
+          prev.map((f) => (f.id === uploadFile.id ? { ...f, status: "error", error: dbError.message } : f)),
+        )
       } else {
-        setFiles((prev) => prev.map((f, idx) => (idx === i ? { ...f, status: "complete", progress: 100 } : f)))
+        setFiles((prev) => prev.map((f) => (f.id === uploadFile.id ? { ...f, status: "complete", progress: 100 } : f)))
       }
     }
 
     toast.success("Upload complete")
     onSuccess()
+    uploadingRef.current = false
+    setIsUploading(false)
   }
 
   const handleClose = () => {
+    if (isUploading) return // Prevent closing during upload
     setFiles([])
     onOpenChange(false)
   }
 
   const pendingCount = files.filter((f) => f.status === "pending").length
   const completeCount = files.filter((f) => f.status === "complete").length
+  const errorCount = files.filter((f) => f.status === "error").length
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -129,8 +153,9 @@ export function UploadDialog({ open, onOpenChange, currentFolder, onSuccess }: U
 
         <div
           className={cn(
-            "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
-            isDragging ? "border-indigo-500 bg-indigo-50" : "border-slate-200 hover:border-slate-300",
+            "border-2 border-dashed rounded-lg p-8 text-center",
+            "transition-colors",
+            isDragging ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/50",
           )}
           onDragOver={(e) => {
             e.preventDefault()
@@ -139,11 +164,11 @@ export function UploadDialog({ open, onOpenChange, currentFolder, onSuccess }: U
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
         >
-          <Upload className="mx-auto h-10 w-10 text-slate-400 mb-4" />
-          <p className="text-sm text-slate-600 mb-2">Drag and drop files here, or</p>
+          <Upload className="mx-auto h-10 w-10 text-muted-foreground mb-4" />
+          <p className="text-sm text-muted-foreground mb-2">Drag and drop files here, or</p>
           <label>
-            <input type="file" multiple className="hidden" onChange={handleFileSelect} />
-            <Button variant="outline" asChild>
+            <input type="file" multiple className="hidden" onChange={handleFileSelect} disabled={isUploading} />
+            <Button variant="outline" asChild disabled={isUploading}>
               <span className="cursor-pointer">Browse Files</span>
             </Button>
           </label>
@@ -151,23 +176,26 @@ export function UploadDialog({ open, onOpenChange, currentFolder, onSuccess }: U
 
         {files.length > 0 && (
           <div className="max-h-60 overflow-auto space-y-2">
-            {files.map((uploadFile, index) => (
-              <div key={index} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                <FileIcon className="h-8 w-8 text-slate-400 flex-shrink-0" />
+            {files.map((uploadFile) => (
+              <div key={uploadFile.id} className={cn("flex items-center gap-3 p-3 rounded-lg", "bg-muted/50")}>
+                <FileIcon className="h-8 w-8 text-muted-foreground flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-900 truncate">{uploadFile.file.name}</p>
-                  <p className="text-xs text-slate-500">{formatFileSize(uploadFile.file.size)}</p>
+                  <p className="text-sm font-medium text-foreground truncate">{uploadFile.file.name}</p>
+                  <p className="text-xs text-muted-foreground">{formatFileSize(uploadFile.file.size)}</p>
                   {uploadFile.status === "uploading" && <Progress value={uploadFile.progress} className="h-1 mt-1" />}
-                  {uploadFile.status === "error" && <p className="text-xs text-red-500 mt-1">{uploadFile.error}</p>}
+                  {uploadFile.status === "error" && <p className="text-xs text-destructive mt-1">{uploadFile.error}</p>}
                 </div>
                 {uploadFile.status === "complete" ? (
                   <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
+                ) : uploadFile.status === "error" ? (
+                  <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0" />
                 ) : uploadFile.status === "pending" ? (
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 flex-shrink-0"
-                    onClick={() => removeFile(index)}
+                    onClick={() => removeFile(uploadFile.id)}
+                    disabled={isUploading}
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -178,16 +206,21 @@ export function UploadDialog({ open, onOpenChange, currentFolder, onSuccess }: U
         )}
 
         <div className="flex justify-between items-center">
-          <p className="text-sm text-slate-500">
-            {files.length > 0 && `${completeCount}/${files.length} files uploaded`}
+          <p className="text-sm text-muted-foreground">
+            {files.length > 0 && (
+              <>
+                {completeCount}/{files.length} uploaded
+                {errorCount > 0 && ` (${errorCount} failed)`}
+              </>
+            )}
           </p>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleClose}>
+            <Button variant="outline" onClick={handleClose} disabled={isUploading}>
               {completeCount === files.length && files.length > 0 ? "Done" : "Cancel"}
             </Button>
             {pendingCount > 0 && (
-              <Button onClick={uploadFiles}>
-                Upload {pendingCount} {pendingCount === 1 ? "file" : "files"}
+              <Button onClick={uploadFiles} disabled={isUploading}>
+                {isUploading ? "Uploading..." : `Upload ${pendingCount} file${pendingCount === 1 ? "" : "s"}`}
               </Button>
             )}
           </div>

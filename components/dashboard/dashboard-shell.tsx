@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import useSWR from "swr"
 import { createClient } from "@/lib/supabase/client"
 import { Sidebar } from "./sidebar"
@@ -13,11 +13,70 @@ interface DashboardShellProps {
   userEmail: string
 }
 
-async function fetchFiles(folderId: string | null): Promise<{ files: FileItem[]; folders: Folder[] }> {
+type ViewType = "files" | "shared" | "trash" | "favorites"
+
+async function fetchFiles(folderId: string | null, view: ViewType): Promise<{ files: FileItem[]; folders: Folder[] }> {
   const supabase = createClient()
 
-  const filesQuery = supabase.from("files").select("*").order("name")
-  const foldersQuery = supabase.from("folders").select("*").order("name")
+  if (view === "trash") {
+    // Fetch trashed items
+    const { data: files } = await supabase
+      .from("files")
+      .select("*")
+      .eq("is_trashed", true)
+      .order("updated_at", { ascending: false })
+
+    const { data: folders } = await supabase
+      .from("folders")
+      .select("*")
+      .eq("is_trashed", true)
+      .order("updated_at", { ascending: false })
+
+    return { files: files || [], folders: folders || [] }
+  }
+
+  if (view === "favorites") {
+    // Fetch favorited items
+    const { data: files } = await supabase
+      .from("files")
+      .select("*")
+      .eq("is_favorite", true)
+      .eq("is_trashed", false)
+      .order("name")
+
+    const { data: folders } = await supabase
+      .from("folders")
+      .select("*")
+      .eq("is_favorite", true)
+      .eq("is_trashed", false)
+      .order("name")
+
+    return { files: files || [], folders: folders || [] }
+  }
+
+  if (view === "shared") {
+    // Fetch files that have shared links
+    const { data: sharedLinks } = await supabase.from("shared_links").select("file_id")
+
+    const fileIds = sharedLinks?.map((link) => link.file_id) || []
+
+    if (fileIds.length === 0) {
+      return { files: [], folders: [] }
+    }
+
+    const { data: files } = await supabase
+      .from("files")
+      .select("*")
+      .in("id", fileIds)
+      .eq("is_trashed", false)
+      .order("name")
+
+    return { files: files || [], folders: [] }
+  }
+
+  // Default: fetch files in folder
+  const filesQuery = supabase.from("files").select("*").eq("is_trashed", false).order("name")
+  const foldersQuery = supabase.from("folders").select("*").eq("is_trashed", false).order("name")
 
   const [filesResult, foldersResult] = await Promise.all([
     folderId === null ? filesQuery.is("folder_id", null) : filesQuery.eq("folder_id", folderId),
@@ -30,7 +89,10 @@ async function fetchFiles(folderId: string | null): Promise<{ files: FileItem[];
   }
 }
 
-async function fetchBreadcrumbs(folderId: string | null): Promise<BreadcrumbItem[]> {
+async function fetchBreadcrumbs(folderId: string | null, view: ViewType): Promise<BreadcrumbItem[]> {
+  if (view === "trash") return [{ id: null, name: "Trash" }]
+  if (view === "favorites") return [{ id: null, name: "Favorites" }]
+  if (view === "shared") return [{ id: null, name: "Shared" }]
   if (!folderId) return [{ id: null, name: "My Files" }]
 
   const supabase = createClient()
@@ -53,20 +115,42 @@ async function fetchBreadcrumbs(folderId: string | null): Promise<BreadcrumbItem
 
 export function DashboardShell({ userId, userEmail }: DashboardShellProps) {
   const [currentFolder, setCurrentFolder] = useState<string | null>(null)
+  const [currentView, setCurrentView] = useState<ViewType>("files")
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [searchQuery, setSearchQuery] = useState("")
 
-  const { data, mutate, isLoading } = useSWR(["files", currentFolder], () => fetchFiles(currentFolder), {
-    revalidateOnFocus: false,
-  })
+  useEffect(() => {
+    const savedViewMode = localStorage.getItem("supabytes-view-mode")
+    if (savedViewMode === "grid" || savedViewMode === "list") {
+      setViewMode(savedViewMode)
+    }
+  }, [])
 
-  const { data: breadcrumbs } = useSWR(["breadcrumbs", currentFolder], () => fetchBreadcrumbs(currentFolder), {
-    revalidateOnFocus: false,
-  })
+  const handleViewModeChange = useCallback((mode: "grid" | "list") => {
+    setViewMode(mode)
+    localStorage.setItem("supabytes-view-mode", mode)
+  }, [])
+
+  const { data, mutate, isLoading } = useSWR(
+    ["files", currentFolder, currentView],
+    () => fetchFiles(currentFolder, currentView),
+    { revalidateOnFocus: false },
+  )
+
+  const { data: breadcrumbs } = useSWR(
+    ["breadcrumbs", currentFolder, currentView],
+    () => fetchBreadcrumbs(currentFolder, currentView),
+    { revalidateOnFocus: false },
+  )
 
   const navigateToFolder = useCallback((folderId: string | null) => {
     setCurrentFolder(folderId)
+  }, [])
+
+  const handleViewChange = useCallback((view: ViewType) => {
+    setCurrentView(view)
+    setCurrentFolder(null)
   }, [])
 
   const refreshFiles = useCallback(() => {
@@ -85,25 +169,28 @@ export function DashboardShell({ userId, userEmail }: DashboardShellProps) {
     : folders
 
   return (
-    <div className="flex h-screen bg-slate-50">
+    <div className="flex h-screen bg-background">
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         userEmail={userEmail}
         onNavigate={navigateToFolder}
         currentFolder={currentFolder}
+        currentView={currentView}
+        onViewChange={handleViewChange}
       />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header
           onMenuClick={() => setSidebarOpen(true)}
           viewMode={viewMode}
-          onViewModeChange={setViewMode}
+          onViewModeChange={handleViewModeChange}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           currentFolder={currentFolder}
           onRefresh={refreshFiles}
           breadcrumbs={breadcrumbs || []}
           onNavigate={navigateToFolder}
+          currentView={currentView}
         />
         <FileExplorer
           files={filteredFiles}
@@ -114,6 +201,7 @@ export function DashboardShell({ userId, userEmail }: DashboardShellProps) {
           onNavigate={navigateToFolder}
           onRefresh={refreshFiles}
           userId={userId}
+          currentView={currentView}
         />
       </div>
     </div>

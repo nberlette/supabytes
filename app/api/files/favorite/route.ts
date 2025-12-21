@@ -12,35 +12,30 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const { fileIds, folderIds } = await request.json()
-  const errors: string[] = []
+  const { fileId, folderId, isFavorite } = await request.json()
 
-  if (fileIds && fileIds.length > 0) {
+  if (fileId) {
     const { error } = await supabase
       .from("files")
-      .update({ is_trashed: true, trashed_at: new Date().toISOString() })
-      .in("id", fileIds)
+      .update({ is_favorite: isFavorite })
+      .eq("id", fileId)
       .eq("user_id", user.id)
 
     if (error) {
-      errors.push(`File trash error: ${error.message}`)
+      return NextResponse.json({ error: error.message }, { status: 500 })
     }
   }
 
-  if (folderIds && folderIds.length > 0) {
+  if (folderId) {
     const { error } = await supabase
       .from("folders")
-      .update({ is_trashed: true, trashed_at: new Date().toISOString() })
-      .in("id", folderIds)
+      .update({ is_favorite: isFavorite })
+      .eq("id", folderId)
       .eq("user_id", user.id)
 
     if (error) {
-      errors.push(`Folder trash error: ${error.message}`)
+      return NextResponse.json({ error: error.message }, { status: 500 })
     }
-  }
-
-  if (errors.length > 0) {
-    return NextResponse.json({ errors }, { status: 207 })
   }
 
   return NextResponse.json({ success: true })
