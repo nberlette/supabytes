@@ -33,3 +33,10 @@ export interface BreadcrumbItem {
   id: string | null
   name: string
 }
+
+export type SelectableItem = { type: "file"; item: FileItem } | { type: "folder"; item: Folder }
+
+export interface SelectionState {
+  selectedFiles: Set<string>
+  selectedFolders: Set<string>
+}

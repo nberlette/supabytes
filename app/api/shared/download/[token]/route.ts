@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { type NextRequest, NextResponse } from "next/server"
 
 interface RouteParams {
@@ -7,7 +7,7 @@ interface RouteParams {
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   const { token } = await params
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   // Get shared link
   const { data: sharedLink } = await supabase.from("shared_links").select("*, files(*)").eq("token", token).single()
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     user_id: string
   }
 
-  // Download file from storage (need to use service role or adjust RLS)
+  // Download file from storage using admin client
   const { data: blob, error: downloadError } = await supabase.storage.from("files").download(file.storage_path)
 
   if (downloadError || !blob) {
