@@ -45,7 +45,7 @@ export default function LoginPage() {
         <div className="flex flex-col gap-6">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Cloud className="h-8 w-8 text-indigo-600" />
-            <span className="text-xl font-bold text-slate-900">CloudVault</span>
+            <span className="text-xl font-bold text-slate-900">Supabytes</span>
           </div>
           <Card>
             <CardHeader>

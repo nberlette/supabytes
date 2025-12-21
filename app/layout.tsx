@@ -12,7 +12,7 @@ const _ibmPlexMono = V0_Font_IBM_Plex_Mono({ subsets: ['latin'], weight: ["100",
 const _merriweather = V0_Font_Merriweather({ subsets: ['latin'], weight: ["300","400","500","600","700","800","900"] })
 
 export const metadata: Metadata = {
-  title: "CloudVault - Secure File Storage",
+  title: "Supabytes - Secure File Storage",
   description: "Store, share, and access your files from anywhere",
     generator: 'v0.app'
 }

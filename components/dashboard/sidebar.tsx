@@ -33,7 +33,7 @@ export function Sidebar({ open, onClose, userEmail, onNavigate, currentFolder }:
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 p-4 border-b">
         <Cloud className="h-6 w-6 text-indigo-600" />
-        <span className="font-bold text-slate-900">CloudVault</span>
+        <span className="font-bold text-slate-900">Supabytes</span>
       </div>
 
       <nav className="flex-1 p-4 space-y-2">

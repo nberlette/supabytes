@@ -10,7 +10,7 @@ export default function SignUpSuccessPage() {
         <div className="flex flex-col gap-6">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Cloud className="h-8 w-8 text-indigo-600" />
-            <span className="text-xl font-bold text-slate-900">CloudVault</span>
+            <span className="text-xl font-bold text-slate-900">Supabytes</span>
           </div>
           <Card>
             <CardHeader className="text-center">
@@ -22,7 +22,7 @@ export default function SignUpSuccessPage() {
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-sm text-slate-600 mb-4">
-                Click the link in your email to activate your account and start using CloudVault.
+                Click the link in your email to activate your account and start using Supabytes.
               </p>
               <Link href="/auth/login">
                 <Button variant="outline" className="w-full bg-transparent">

@@ -11,7 +11,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Cloud className="h-8 w-8 text-indigo-600" />
-            <span className="text-xl font-bold text-slate-900">CloudVault</span>
+            <span className="text-xl font-bold text-slate-900">Supabytes</span>
           </div>
           <nav className="flex items-center gap-4">
             <Link href="/auth/login">
@@ -87,7 +87,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t bg-slate-50 py-8">
         <div className="container mx-auto px-4 text-center text-slate-600">
-          <p>&copy; 2025 CloudVault. All rights reserved.</p>
+          <p>&copy; 2025 Supabytes. All rights reserved.</p>
         </div>
       </footer>
     </div>
