@@ -1,21 +1,23 @@
-import { createClient } from "@/lib/supabase/server"
-import { type NextRequest, NextResponse } from "next/server"
+import { createClient } from "@/lib/supabase/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { name, parent_id } = await request.json()
+  const { name, parent_id } = await request.json();
 
   if (!name) {
-    return NextResponse.json({ error: "Folder name is required" }, { status: 400 })
+    return NextResponse.json({ error: "Folder name is required" }, {
+      status: 400,
+    });
   }
 
   const { data: folder, error } = await supabase
@@ -26,11 +28,11 @@ export async function POST(request: NextRequest) {
       user_id: user.id,
     })
     .select()
-    .single()
+    .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ folder })
+  return NextResponse.json({ folder });
 }

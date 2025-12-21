@@ -1,7 +1,7 @@
-import type React from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Cloud, Shield, Share2, Smartphone, Zap, Lock } from "lucide-react"
+import type React from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Cloud, Lock, Share2, Shield, Smartphone, Zap } from "lucide-react";
 
 export default function HomePage() {
   return (
@@ -30,8 +30,8 @@ export default function HomePage() {
           Your Files, Anywhere, <span className="text-indigo-600">Anytime</span>
         </h1>
         <p className="text-xl text-slate-600 mb-8 max-w-2xl mx-auto text-pretty">
-          Securely store, share, and access your files from any device. Simple, fast, and reliable cloud storage for
-          everyone.
+          Securely store, share, and access your files from any device. Simple,
+          fast, and reliable cloud storage for everyone.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/auth/sign-up">
@@ -40,7 +40,11 @@ export default function HomePage() {
             </Button>
           </Link>
           <Link href="/auth/login">
-            <Button size="lg" variant="outline" className="w-full sm:w-auto bg-transparent">
+            <Button
+              size="lg"
+              variant="outline"
+              className="w-full sm:w-auto bg-transparent"
+            >
               Sign In
             </Button>
           </Link>
@@ -49,7 +53,9 @@ export default function HomePage() {
 
       {/* Features Grid */}
       <section className="container mx-auto px-4 py-20">
-        <h2 className="text-3xl font-bold text-center text-slate-900 mb-12">Everything You Need</h2>
+        <h2 className="text-3xl font-bold text-center text-slate-900 mb-12">
+          Everything You Need
+        </h2>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           <FeatureCard
             icon={<Shield className="h-10 w-10 text-indigo-600" />}
@@ -91,7 +97,7 @@ export default function HomePage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }
 
 function FeatureCard({
@@ -99,9 +105,9 @@ function FeatureCard({
   title,
   description,
 }: {
-  icon: React.ReactNode
-  title: string
-  description: string
+  icon: React.ReactNode;
+  title: string;
+  description: string;
 }) {
   return (
     <div className="p-6 rounded-xl border bg-white hover:shadow-lg transition-shadow">
@@ -109,5 +115,5 @@ function FeatureCard({
       <h3 className="text-xl font-semibold text-slate-900 mb-2">{title}</h3>
       <p className="text-slate-600">{description}</p>
     </div>
-  )
+  );
 }

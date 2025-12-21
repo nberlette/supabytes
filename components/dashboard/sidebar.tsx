@@ -1,22 +1,30 @@
-"use client"
+"use client";
 
-import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent } from "@/components/ui/sheet"
-import { Cloud, FolderOpen, Share2, Trash2, Settings, LogOut, Star } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { StorageMeter } from "./storage-meter"
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import {
+  Cloud,
+  FolderOpen,
+  LogOut,
+  Settings,
+  Share2,
+  Star,
+  Trash2,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { StorageMeter } from "./storage-meter";
 
 interface SidebarProps {
-  open: boolean
-  onClose: () => void
-  userEmail: string
-  onNavigate: (folderId: string | null) => void
-  currentFolder: string | null
-  currentView?: "files" | "shared" | "trash" | "favorites"
-  onViewChange?: (view: "files" | "shared" | "trash" | "favorites") => void
+  open: boolean;
+  onClose: () => void;
+  userEmail: string;
+  onNavigate: (folderId: string | null) => void;
+  currentFolder: string | null;
+  currentView?: "files" | "shared" | "trash" | "favorites";
+  onViewChange?: (view: "files" | "shared" | "trash" | "favorites") => void;
 }
 
 export function Sidebar({
@@ -28,24 +36,26 @@ export function Sidebar({
   currentView = "files",
   onViewChange,
 }: SidebarProps) {
-  const router = useRouter()
+  const router = useRouter();
 
   const handleSignOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push("/")
-  }
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/");
+  };
 
   const handleNavigateHome = () => {
-    onViewChange?.("files")
-    onNavigate(null)
-    onClose()
-  }
+    onViewChange?.("files");
+    onNavigate(null);
+    onClose();
+  };
 
-  const handleViewChange = (view: "files" | "shared" | "trash" | "favorites") => {
-    onViewChange?.(view)
-    onClose()
-  }
+  const handleViewChange = (
+    view: "files" | "shared" | "trash" | "favorites",
+  ) => {
+    onViewChange?.(view);
+    onClose();
+  };
 
   const sidebarContent = (
     <div className="flex flex-col h-full bg-card">
@@ -59,7 +69,8 @@ export function Sidebar({
           variant="ghost"
           className={cn(
             "w-full justify-start",
-            currentView === "files" && currentFolder === null && "bg-primary/10 text-primary",
+            currentView === "files" && currentFolder === null &&
+              "bg-primary/10 text-primary",
           )}
           onClick={handleNavigateHome}
         >
@@ -68,7 +79,10 @@ export function Sidebar({
         </Button>
         <Button
           variant="ghost"
-          className={cn("w-full justify-start", currentView === "favorites" && "bg-primary/10 text-primary")}
+          className={cn(
+            "w-full justify-start",
+            currentView === "favorites" && "bg-primary/10 text-primary",
+          )}
           onClick={() => handleViewChange("favorites")}
         >
           <Star className="mr-2 h-4 w-4" />
@@ -76,7 +90,10 @@ export function Sidebar({
         </Button>
         <Button
           variant="ghost"
-          className={cn("w-full justify-start", currentView === "shared" && "bg-primary/10 text-primary")}
+          className={cn(
+            "w-full justify-start",
+            currentView === "shared" && "bg-primary/10 text-primary",
+          )}
           onClick={() => handleViewChange("shared")}
         >
           <Share2 className="mr-2 h-4 w-4" />
@@ -84,7 +101,10 @@ export function Sidebar({
         </Button>
         <Button
           variant="ghost"
-          className={cn("w-full justify-start", currentView === "trash" && "bg-primary/10 text-primary")}
+          className={cn(
+            "w-full justify-start",
+            currentView === "trash" && "bg-primary/10 text-primary",
+          )}
           onClick={() => handleViewChange("trash")}
         >
           <Trash2 className="mr-2 h-4 w-4" />
@@ -98,10 +118,16 @@ export function Sidebar({
 
       <div className="p-4 border-t border-border space-y-2">
         <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground truncate px-2 flex-1">{userEmail}</div>
+          <div className="text-sm text-muted-foreground truncate px-2 flex-1">
+            {userEmail}
+          </div>
           <ThemeToggle />
         </div>
-        <Button variant="ghost" className="w-full justify-start" onClick={() => router.push("/dashboard/settings")}>
+        <Button
+          variant="ghost"
+          className="w-full justify-start"
+          onClick={() => router.push("/dashboard/settings")}
+        >
           <Settings className="mr-2 h-4 w-4" />
           Settings
         </Button>
@@ -115,12 +141,14 @@ export function Sidebar({
         </Button>
       </div>
     </div>
-  )
+  );
 
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-64 border-r border-border bg-card flex-col">{sidebarContent}</aside>
+      <aside className="hidden lg:flex w-64 border-r border-border bg-card flex-col">
+        {sidebarContent}
+      </aside>
 
       {/* Mobile Sidebar */}
       <Sheet open={open} onOpenChange={onClose}>
@@ -129,5 +157,5 @@ export function Sidebar({
         </SheetContent>
       </Sheet>
     </>
-  )
+  );
 }

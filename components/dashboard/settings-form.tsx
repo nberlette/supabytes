@@ -1,37 +1,45 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { useTheme } from "next-themes"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Separator } from "@/components/ui/separator"
-import { Progress } from "@/components/ui/progress"
-import { ArrowLeft, Moon, Sun, Monitor, LayoutGrid, List } from "lucide-react"
-import { formatFileSize } from "@/lib/utils/format"
-import { toast } from "sonner"
-import type { UserPreferences } from "@/lib/types"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
+import { ArrowLeft, LayoutGrid, List, Monitor, Moon, Sun } from "lucide-react";
+import { formatFileSize } from "@/lib/utils/format";
+import { toast } from "sonner";
+import type { UserPreferences } from "@/lib/types";
 
 interface SettingsFormProps {
-  userId: string
-  userEmail: string
-  preferences: UserPreferences | null
-  storageUsed: number
+  userId: string;
+  userEmail: string;
+  preferences: UserPreferences | null;
+  storageUsed: number;
 }
 
-export function SettingsForm({ userId, userEmail, preferences, storageUsed }: SettingsFormProps) {
-  const router = useRouter()
-  const { theme, setTheme } = useTheme()
-  const [viewMode, setViewMode] = useState(preferences?.view_mode || "grid")
-  const [isSaving, setIsSaving] = useState(false)
+export function SettingsForm(
+  { userId, userEmail, preferences, storageUsed }: SettingsFormProps,
+) {
+  const router = useRouter();
+  const { theme, setTheme } = useTheme();
+  const [viewMode, setViewMode] = useState(preferences?.view_mode || "grid");
+  const [isSaving, setIsSaving] = useState(false);
 
-  const storageQuota = preferences?.storage_quota_bytes || 5368709120 // 5GB default
-  const storagePercent = Math.min((storageUsed / storageQuota) * 100, 100)
+  const storageQuota = preferences?.storage_quota_bytes || 5368709120; // 5GB default
+  const storagePercent = Math.min((storageUsed / storageQuota) * 100, 100);
 
   const handleSavePreferences = async () => {
-    setIsSaving(true)
+    setIsSaving(true);
 
     try {
       const res = await fetch("/api/preferences", {
@@ -41,24 +49,28 @@ export function SettingsForm({ userId, userEmail, preferences, storageUsed }: Se
           view_mode: viewMode,
           theme: theme,
         }),
-      })
+      });
 
       if (res.ok) {
-        localStorage.setItem("supabytes-view-mode", viewMode)
-        toast.success("Preferences saved")
+        localStorage.setItem("supabytes-view-mode", viewMode);
+        toast.success("Preferences saved");
       } else {
-        toast.error("Failed to save preferences")
+        toast.error("Failed to save preferences");
       }
     } catch {
-      toast.error("Failed to save preferences")
+      toast.error("Failed to save preferences");
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
-      <Button variant="ghost" onClick={() => router.push("/dashboard")} className="mb-4">
+      <Button
+        variant="ghost"
+        onClick={() => router.push("/dashboard")}
+        className="mb-4"
+      >
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back to Dashboard
       </Button>
@@ -94,7 +106,9 @@ export function SettingsForm({ userId, userEmail, preferences, storageUsed }: Se
               </span>
             </div>
             <Progress value={storagePercent} className="h-2" />
-            <p className="text-xs text-muted-foreground">{storagePercent.toFixed(1)}% used</p>
+            <p className="text-xs text-muted-foreground">
+              {storagePercent.toFixed(1)}% used
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -107,9 +121,17 @@ export function SettingsForm({ userId, userEmail, preferences, storageUsed }: Se
         <CardContent className="space-y-6">
           <div className="space-y-3">
             <Label>Theme</Label>
-            <RadioGroup value={theme} onValueChange={setTheme} className="grid grid-cols-3 gap-4">
+            <RadioGroup
+              value={theme}
+              onValueChange={setTheme}
+              className="grid grid-cols-3 gap-4"
+            >
               <div>
-                <RadioGroupItem value="light" id="light" className="peer sr-only" />
+                <RadioGroupItem
+                  value="light"
+                  id="light"
+                  className="peer sr-only"
+                />
                 <Label
                   htmlFor="light"
                   className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
@@ -119,7 +141,11 @@ export function SettingsForm({ userId, userEmail, preferences, storageUsed }: Se
                 </Label>
               </div>
               <div>
-                <RadioGroupItem value="dark" id="dark" className="peer sr-only" />
+                <RadioGroupItem
+                  value="dark"
+                  id="dark"
+                  className="peer sr-only"
+                />
                 <Label
                   htmlFor="dark"
                   className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
@@ -129,7 +155,11 @@ export function SettingsForm({ userId, userEmail, preferences, storageUsed }: Se
                 </Label>
               </div>
               <div>
-                <RadioGroupItem value="system" id="system" className="peer sr-only" />
+                <RadioGroupItem
+                  value="system"
+                  id="system"
+                  className="peer sr-only"
+                />
                 <Label
                   htmlFor="system"
                   className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
@@ -151,7 +181,11 @@ export function SettingsForm({ userId, userEmail, preferences, storageUsed }: Se
               className="grid grid-cols-2 gap-4"
             >
               <div>
-                <RadioGroupItem value="grid" id="grid" className="peer sr-only" />
+                <RadioGroupItem
+                  value="grid"
+                  id="grid"
+                  className="peer sr-only"
+                />
                 <Label
                   htmlFor="grid"
                   className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
@@ -161,7 +195,11 @@ export function SettingsForm({ userId, userEmail, preferences, storageUsed }: Se
                 </Label>
               </div>
               <div>
-                <RadioGroupItem value="list" id="list" className="peer sr-only" />
+                <RadioGroupItem
+                  value="list"
+                  id="list"
+                  className="peer sr-only"
+                />
                 <Label
                   htmlFor="list"
                   className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
@@ -181,5 +219,5 @@ export function SettingsForm({ userId, userEmail, preferences, storageUsed }: Se
         </Button>
       </div>
     </div>
-  )
+  );
 }

@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,24 +9,32 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Menu, Search, LayoutGrid, List, RefreshCw, Upload, FolderPlus } from "lucide-react"
-import { Fragment, useState } from "react"
-import type { BreadcrumbItem as BreadcrumbItemType } from "@/lib/types"
-import { UploadDialog } from "./upload-dialog"
-import { CreateFolderDialog } from "./create-folder-dialog"
+} from "@/components/ui/breadcrumb";
+import {
+  FolderPlus,
+  LayoutGrid,
+  List,
+  Menu,
+  RefreshCw,
+  Search,
+  Upload,
+} from "lucide-react";
+import { Fragment, useState } from "react";
+import type { BreadcrumbItem as BreadcrumbItemType } from "@/lib/types";
+import { UploadDialog } from "./upload-dialog";
+import { CreateFolderDialog } from "./create-folder-dialog";
 
 interface HeaderProps {
-  onMenuClick: () => void
-  viewMode: "grid" | "list"
-  onViewModeChange: (mode: "grid" | "list") => void
-  searchQuery: string
-  onSearchChange: (query: string) => void
-  currentFolder: string | null
-  onRefresh: () => void
-  breadcrumbs: BreadcrumbItemType[]
-  onNavigate: (folderId: string | null) => void
-  currentView?: "files" | "shared" | "trash" | "favorites"
+  onMenuClick: () => void;
+  viewMode: "grid" | "list";
+  onViewModeChange: (mode: "grid" | "list") => void;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  currentFolder: string | null;
+  onRefresh: () => void;
+  breadcrumbs: BreadcrumbItemType[];
+  onNavigate: (folderId: string | null) => void;
+  currentView?: "files" | "shared" | "trash" | "favorites";
 }
 
 export function Header({
@@ -41,15 +49,20 @@ export function Header({
   onNavigate,
   currentView = "files",
 }: HeaderProps) {
-  const [uploadOpen, setUploadOpen] = useState(false)
-  const [folderOpen, setFolderOpen] = useState(false)
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [folderOpen, setFolderOpen] = useState(false);
 
-  const showUploadActions = currentView === "files"
+  const showUploadActions = currentView === "files";
 
   return (
     <header className="bg-card border-b border-border px-4 py-3">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="lg:hidden" onClick={onMenuClick}>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="lg:hidden"
+          onClick={onMenuClick}
+        >
           <Menu className="h-5 w-5" />
         </Button>
 
@@ -60,25 +73,23 @@ export function Header({
               <Fragment key={item.id ?? "root"}>
                 {index > 0 && <BreadcrumbSeparator />}
                 <BreadcrumbItem>
-                  {index === breadcrumbs.length - 1 ? (
-                    <BreadcrumbPage>{item.name}</BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbLink
-                      href={
-                        "#/" +
-                        all
-                          .slice(0, index + 1)
-                          .map((i) => i.name)
-                          .join("/")
-                      }
-                      onClick={(e) => {
-                        e.preventDefault()
-                        onNavigate(item.id)
-                      }}
-                    >
-                      {item.name}
-                    </BreadcrumbLink>
-                  )}
+                  {index === breadcrumbs.length - 1
+                    ? <BreadcrumbPage>{item.name}</BreadcrumbPage>
+                    : (
+                      <BreadcrumbLink
+                        href={"#/" +
+                          all
+                            .slice(0, index + 1)
+                            .map((i) => i.name)
+                            .join("/")}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onNavigate(item.id);
+                        }}
+                      >
+                        {item.name}
+                      </BreadcrumbLink>
+                    )}
                 </BreadcrumbItem>
               </Fragment>
             ))}
@@ -100,7 +111,12 @@ export function Header({
 
         {/* Actions */}
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={onRefresh} title="Refresh">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onRefresh}
+            title="Refresh"
+          >
             <RefreshCw className="h-4 w-4" />
           </Button>
 
@@ -125,7 +141,12 @@ export function Header({
 
           {showUploadActions && (
             <>
-              <Button variant="outline" size="sm" onClick={() => setFolderOpen(true)} className="hidden sm:flex">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setFolderOpen(true)}
+                className="hidden sm:flex"
+              >
                 <FolderPlus className="h-4 w-4 mr-2" />
                 New Folder
               </Button>
@@ -153,5 +174,5 @@ export function Header({
         onSuccess={onRefresh}
       />
     </header>
-  )
+  );
 }

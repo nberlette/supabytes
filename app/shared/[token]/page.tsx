@@ -1,32 +1,40 @@
-import { createClient } from "@/lib/supabase/server"
-import { notFound } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Cloud, Download, FileIcon } from "lucide-react"
-import { formatFileSize } from "@/lib/utils/format"
-import Link from "next/link"
+import { createClient } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Cloud, Download, FileIcon } from "lucide-react";
+import { formatFileSize } from "@/lib/utils/format";
+import Link from "next/link";
 
 interface PageProps {
-  params: Promise<{ token: string }>
+  params: Promise<{ token: string }>;
 }
 
 export default async function SharedFilePage({ params }: PageProps) {
-  const { token } = await params
-  const supabase = await createClient()
+  const { token } = await params;
+  const supabase = await createClient();
 
   // Get shared link with file info
-  const { data: sharedLink } = await supabase.from("shared_links").select("*, files(*)").eq("token", token).single()
+  const { data: sharedLink } = await supabase.from("shared_links").select(
+    "*, files(*)",
+  ).eq("token", token).single();
 
   if (!sharedLink || !sharedLink.files) {
-    notFound()
+    notFound();
   }
 
   const file = sharedLink.files as {
-    id: string
-    name: string
-    size: number
-    mime_type: string | null
-  }
+    id: string;
+    name: string;
+    size: number;
+    mime_type: string | null;
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
@@ -51,10 +59,12 @@ export default async function SharedFilePage({ params }: PageProps) {
                 Download File
               </Button>
             </Link>
-            <p className="text-xs text-center text-slate-500">This file has been shared with you via Supabytes</p>
+            <p className="text-xs text-center text-slate-500">
+              This file has been shared with you via Supabytes
+            </p>
           </CardContent>
         </Card>
       </div>
     </div>
-  )
+  );
 }

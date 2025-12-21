@@ -1,29 +1,29 @@
-"use client"
+"use client";
 
-import { useState, useCallback } from "react"
-import type { FileItem, Folder } from "@/lib/types"
-import { FileCard } from "./file-card"
-import { FolderCard } from "./folder-card"
-import { FileRow } from "./file-row"
-import { FolderRow } from "./folder-row"
-import { EmptyState } from "./empty-state"
-import { SelectionToolbar } from "./selection-toolbar"
-import { MoveDialog } from "./move-dialog"
-import { ConfirmDialog } from "./confirm-dialog"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Checkbox } from "@/components/ui/checkbox"
-import { toast } from "sonner"
+import { useCallback, useState } from "react";
+import type { FileItem, Folder } from "@/lib/types";
+import { FileCard } from "./file-card";
+import { FolderCard } from "./folder-card";
+import { FileRow } from "./file-row";
+import { FolderRow } from "./folder-row";
+import { EmptyState } from "./empty-state";
+import { SelectionToolbar } from "./selection-toolbar";
+import { MoveDialog } from "./move-dialog";
+import { ConfirmDialog } from "./confirm-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
 
 interface FileExplorerProps {
-  files: FileItem[]
-  folders: Folder[]
-  viewMode: "grid" | "list"
-  isLoading: boolean
-  currentFolder: string | null
-  onNavigate: (folderId: string | null) => void
-  onRefresh: () => void
-  userId: string
-  currentView?: "files" | "shared" | "trash" | "favorites"
+  files: FileItem[];
+  folders: Folder[];
+  viewMode: "grid" | "list";
+  isLoading: boolean;
+  currentFolder: string | null;
+  onNavigate: (folderId: string | null) => void;
+  onRefresh: () => void;
+  userId: string;
+  currentView?: "files" | "shared" | "trash" | "favorites";
 }
 
 export function FileExplorer({
@@ -37,66 +37,70 @@ export function FileExplorer({
   userId,
   currentView = "files",
 }: FileExplorerProps) {
-  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set())
-  const [selectedFolders, setSelectedFolders] = useState<Set<string>>(new Set())
-  const [moveDialogOpen, setMoveDialogOpen] = useState(false)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [isMoving, setIsMoving] = useState(false)
-  const [singleMoveItem, setSingleMoveItem] = useState<{
-    type: "file" | "folder"
-    id: string
-  } | null>(null)
+  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  const [selectedFolders, setSelectedFolders] = useState<Set<string>>(
+    new Set(),
+  );
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isMoving, setIsMoving] = useState(false);
+  const [singleMoveItem, setSingleMoveItem] = useState<
+    {
+      type: "file" | "folder";
+      id: string;
+    } | null
+  >(null);
 
-  const selectedCount = selectedFiles.size + selectedFolders.size
-  const isTrashView = currentView === "trash"
+  const selectedCount = selectedFiles.size + selectedFolders.size;
+  const isTrashView = currentView === "trash";
 
   const handleFileSelect = useCallback((id: string, selected: boolean) => {
     setSelectedFiles((prev) => {
-      const next = new Set(prev)
+      const next = new Set(prev);
       if (selected) {
-        next.add(id)
+        next.add(id);
       } else {
-        next.delete(id)
+        next.delete(id);
       }
-      return next
-    })
-  }, [])
+      return next;
+    });
+  }, []);
 
   const handleFolderSelect = useCallback((id: string, selected: boolean) => {
     setSelectedFolders((prev) => {
-      const next = new Set(prev)
+      const next = new Set(prev);
       if (selected) {
-        next.add(id)
+        next.add(id);
       } else {
-        next.delete(id)
+        next.delete(id);
       }
-      return next
-    })
-  }, [])
+      return next;
+    });
+  }, []);
 
   const handleSelectAll = useCallback(
     (checked: boolean) => {
       if (checked) {
-        setSelectedFiles(new Set(files.map((f) => f.id)))
-        setSelectedFolders(new Set(folders.map((f) => f.id)))
+        setSelectedFiles(new Set(files.map((f) => f.id)));
+        setSelectedFolders(new Set(folders.map((f) => f.id)));
       } else {
-        setSelectedFiles(new Set())
-        setSelectedFolders(new Set())
+        setSelectedFiles(new Set());
+        setSelectedFolders(new Set());
       }
     },
     [files, folders],
-  )
+  );
 
   const clearSelection = useCallback(() => {
-    setSelectedFiles(new Set())
-    setSelectedFolders(new Set())
-  }, [])
+    setSelectedFiles(new Set());
+    setSelectedFolders(new Set());
+  }, []);
 
   const handleDropOnFolder = useCallback(
     async (targetFolderId: string, item: { type: string; id: string }) => {
-      const fileIds = item.type === "file" ? [item.id] : []
-      const folderIds = item.type === "folder" ? [item.id] : []
+      const fileIds = item.type === "file" ? [item.id] : [];
+      const folderIds = item.type === "folder" ? [item.id] : [];
 
       try {
         const res = await fetch("/api/files/move", {
@@ -107,28 +111,30 @@ export function FileExplorer({
             folderIds,
             targetFolderId,
           }),
-        })
+        });
 
         if (res.ok) {
-          toast.success("Item moved successfully")
-          onRefresh()
+          toast.success("Item moved successfully");
+          onRefresh();
         } else {
-          const data = await res.json()
-          toast.error(data.errors?.[0] || "Failed to move item")
+          const data = await res.json();
+          toast.error(data.errors?.[0] || "Failed to move item");
         }
       } catch {
-        toast.error("Failed to move item")
+        toast.error("Failed to move item");
       }
     },
     [onRefresh],
-  )
+  );
 
   const handleBulkDelete = useCallback(async () => {
-    if (selectedCount === 0) return
+    if (selectedCount === 0) return;
 
-    setIsDeleting(true)
+    setIsDeleting(true);
     try {
-      const endpoint = isTrashView ? "/api/files/permanent-delete" : "/api/files/bulk-delete"
+      const endpoint = isTrashView
+        ? "/api/files/permanent-delete"
+        : "/api/files/bulk-delete";
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -136,28 +142,37 @@ export function FileExplorer({
           fileIds: Array.from(selectedFiles),
           folderIds: Array.from(selectedFolders),
         }),
-      })
+      });
 
       if (res.ok) {
         toast.success(
-          isTrashView ? `Permanently deleted ${selectedCount} item(s)` : `Moved ${selectedCount} item(s) to trash`,
-        )
-        clearSelection()
-        onRefresh()
+          isTrashView
+            ? `Permanently deleted ${selectedCount} item(s)`
+            : `Moved ${selectedCount} item(s) to trash`,
+        );
+        clearSelection();
+        onRefresh();
       } else {
-        const data = await res.json()
-        toast.error(data.errors?.[0] || "Failed to delete some items")
+        const data = await res.json();
+        toast.error(data.errors?.[0] || "Failed to delete some items");
       }
     } catch {
-      toast.error("Failed to delete items")
+      toast.error("Failed to delete items");
     } finally {
-      setIsDeleting(false)
-      setDeleteDialogOpen(false)
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
     }
-  }, [selectedFiles, selectedFolders, selectedCount, clearSelection, onRefresh, isTrashView])
+  }, [
+    selectedFiles,
+    selectedFolders,
+    selectedCount,
+    clearSelection,
+    onRefresh,
+    isTrashView,
+  ]);
 
   const handleBulkRestore = useCallback(async () => {
-    if (selectedCount === 0) return
+    if (selectedCount === 0) return;
 
     try {
       const res = await fetch("/api/files/restore", {
@@ -167,27 +182,37 @@ export function FileExplorer({
           fileIds: Array.from(selectedFiles),
           folderIds: Array.from(selectedFolders),
         }),
-      })
+      });
 
       if (res.ok) {
-        toast.success(`Restored ${selectedCount} item(s)`)
-        clearSelection()
-        onRefresh()
+        toast.success(`Restored ${selectedCount} item(s)`);
+        clearSelection();
+        onRefresh();
       } else {
-        const data = await res.json()
-        toast.error(data.errors?.[0] || "Failed to restore items")
+        const data = await res.json();
+        toast.error(data.errors?.[0] || "Failed to restore items");
       }
     } catch {
-      toast.error("Failed to restore items")
+      toast.error("Failed to restore items");
     }
-  }, [selectedFiles, selectedFolders, selectedCount, clearSelection, onRefresh])
+  }, [
+    selectedFiles,
+    selectedFolders,
+    selectedCount,
+    clearSelection,
+    onRefresh,
+  ]);
 
   const handleBulkMove = useCallback(
     async (targetFolderId: string | null) => {
-      setIsMoving(true)
+      setIsMoving(true);
 
-      const fileIds = singleMoveItem?.type === "file" ? [singleMoveItem.id] : Array.from(selectedFiles)
-      const folderIds = singleMoveItem?.type === "folder" ? [singleMoveItem.id] : Array.from(selectedFolders)
+      const fileIds = singleMoveItem?.type === "file"
+        ? [singleMoveItem.id]
+        : Array.from(selectedFiles);
+      const folderIds = singleMoveItem?.type === "folder"
+        ? [singleMoveItem.id]
+        : Array.from(selectedFolders);
 
       try {
         const res = await fetch("/api/files/move", {
@@ -198,76 +223,87 @@ export function FileExplorer({
             folderIds,
             targetFolderId,
           }),
-        })
+        });
 
         if (res.ok) {
-          toast.success("Items moved successfully")
-          clearSelection()
-          onRefresh()
+          toast.success("Items moved successfully");
+          clearSelection();
+          onRefresh();
         } else {
-          const data = await res.json()
-          toast.error(data.errors?.[0] || "Failed to move items")
+          const data = await res.json();
+          toast.error(data.errors?.[0] || "Failed to move items");
         }
       } catch {
-        toast.error("Failed to move items")
+        toast.error("Failed to move items");
       } finally {
-        setIsMoving(false)
-        setMoveDialogOpen(false)
-        setSingleMoveItem(null)
+        setIsMoving(false);
+        setMoveDialogOpen(false);
+        setSingleMoveItem(null);
       }
     },
     [selectedFiles, selectedFolders, singleMoveItem, clearSelection, onRefresh],
-  )
+  );
 
   const handleBulkDownload = useCallback(() => {
     selectedFiles.forEach((fileId) => {
-      window.open(`/api/files/download/${fileId}`, "_blank")
-    })
-  }, [selectedFiles])
+      window.open(`/api/files/download/${fileId}`, "_blank");
+    });
+  }, [selectedFiles]);
 
   const handleSingleFileMove = useCallback((fileId: string) => {
-    setSingleMoveItem({ type: "file", id: fileId })
-    setMoveDialogOpen(true)
-  }, [])
+    setSingleMoveItem({ type: "file", id: fileId });
+    setMoveDialogOpen(true);
+  }, []);
 
   const handleSingleFolderMove = useCallback((folderId: string) => {
-    setSingleMoveItem({ type: "folder", id: folderId })
-    setMoveDialogOpen(true)
-  }, [])
+    setSingleMoveItem({ type: "folder", id: folderId });
+    setMoveDialogOpen(true);
+  }, []);
 
   const openBulkMoveDialog = useCallback(() => {
-    setSingleMoveItem(null)
-    setMoveDialogOpen(true)
-  }, [])
+    setSingleMoveItem(null);
+    setMoveDialogOpen(true);
+  }, []);
 
-  const allSelected =
-    files.length + folders.length > 0 && selectedFiles.size === files.length && selectedFolders.size === folders.length
+  const allSelected = files.length + folders.length > 0 &&
+    selectedFiles.size === files.length &&
+    selectedFolders.size === folders.length;
 
   if (isLoading) {
     return (
       <div className="flex-1 p-6 overflow-auto">
-        {viewMode === "grid" ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <Skeleton key={i} className="aspect-square rounded-lg" />
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-14 rounded-lg" />
-            ))}
-          </div>
-        )}
+        {viewMode === "grid"
+          ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <Skeleton key={i} className="aspect-square rounded-lg" />
+              ))}
+            </div>
+          )
+          : (
+            <div className="space-y-2">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-14 rounded-lg" />
+              ))}
+            </div>
+          )}
       </div>
-    )
+    );
   }
 
   if (files.length === 0 && folders.length === 0) {
-    return <EmptyState currentFolder={currentFolder} onRefresh={onRefresh} currentView={currentView} />
+    return (
+      <EmptyState
+        currentFolder={currentFolder}
+        onRefresh={onRefresh}
+        currentView={currentView}
+      />
+    );
   }
 
-  const excludeFolderIds = singleMoveItem?.type === "folder" ? [singleMoveItem.id] : Array.from(selectedFolders)
+  const excludeFolderIds = singleMoveItem?.type === "folder"
+    ? [singleMoveItem.id]
+    : Array.from(selectedFolders);
 
   if (viewMode === "grid") {
     return (
@@ -329,18 +365,16 @@ export function FileExplorer({
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
           title={isTrashView ? "Permanently Delete?" : "Move to Trash?"}
-          description={
-            isTrashView
-              ? `This will permanently delete ${selectedCount} item(s). This action cannot be undone.`
-              : `This will move ${selectedCount} item(s) to trash. You can restore them later.`
-          }
+          description={isTrashView
+            ? `This will permanently delete ${selectedCount} item(s). This action cannot be undone.`
+            : `This will move ${selectedCount} item(s) to trash. You can restore them later.`}
           confirmLabel={isTrashView ? "Delete Forever" : "Move to Trash"}
           onConfirm={handleBulkDelete}
           isLoading={isDeleting}
           variant={isTrashView ? "destructive" : "default"}
         />
       </>
-    )
+    );
   }
 
   return (
@@ -351,9 +385,14 @@ export function FileExplorer({
             <thead>
               <tr className="border-b border-border bg-muted/50">
                 <th className="px-4 py-3 w-10">
-                  <Checkbox checked={allSelected} onCheckedChange={handleSelectAll} />
+                  <Checkbox
+                    checked={allSelected}
+                    onCheckedChange={handleSelectAll}
+                  />
                 </th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Name</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">
+                  Name
+                </th>
                 <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground hidden sm:table-cell">
                   Size
                 </th>
@@ -416,16 +455,14 @@ export function FileExplorer({
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         title={isTrashView ? "Permanently Delete?" : "Move to Trash?"}
-        description={
-          isTrashView
-            ? `This will permanently delete ${selectedCount} item(s). This action cannot be undone.`
-            : `This will move ${selectedCount} item(s) to trash. You can restore them later.`
-        }
+        description={isTrashView
+          ? `This will permanently delete ${selectedCount} item(s). This action cannot be undone.`
+          : `This will move ${selectedCount} item(s) to trash. You can restore them later.`}
         confirmLabel={isTrashView ? "Delete Forever" : "Move to Trash"}
         onConfirm={handleBulkDelete}
         isLoading={isDeleting}
         variant={isTrashView ? "destructive" : "default"}
       />
     </>
-  )
+  );
 }

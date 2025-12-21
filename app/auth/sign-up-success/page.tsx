@@ -1,7 +1,13 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Cloud, Mail } from "lucide-react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Cloud, Mail } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function SignUpSuccessPage() {
   return (
@@ -18,11 +24,14 @@ export default function SignUpSuccessPage() {
                 <Mail className="h-6 w-6 text-indigo-600" />
               </div>
               <CardTitle className="text-2xl">Check your email</CardTitle>
-              <CardDescription>{"We've sent you a confirmation link"}</CardDescription>
+              <CardDescription>
+                {"We've sent you a confirmation link"}
+              </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-sm text-slate-600 mb-4">
-                Click the link in your email to activate your account and start using Supabytes.
+                Click the link in your email to activate your account and start
+                using Supabytes.
               </p>
               <Link href="/auth/login">
                 <Button variant="outline" className="w-full bg-transparent">
@@ -34,5 +43,5 @@ export default function SignUpSuccessPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
