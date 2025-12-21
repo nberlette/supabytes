@@ -52,7 +52,7 @@ export function Header({
         {/* Breadcrumbs */}
         <Breadcrumb className="hidden sm:flex">
           <BreadcrumbList>
-            {breadcrumbs.map((item, index) => (
+            {breadcrumbs.toReversed().map((item, index, all) => (
               <Fragment key={item.id ?? "root"}>
                 {index > 0 && <BreadcrumbSeparator />}
                 <BreadcrumbItem>
@@ -60,10 +60,10 @@ export function Header({
                     <BreadcrumbPage>{item.name}</BreadcrumbPage>
                   ) : (
                     <BreadcrumbLink
-                      href="#"
+                      href={"#/" + all.slice(0, index + 1).map((i) => item.name).join("/")}
                       onClick={(e) => {
-                        e.preventDefault()
-                        onNavigate(item.id)
+                        e.preventDefault();
+                        onNavigate(item.id);
                       }}
                     >
                       {item.name}
