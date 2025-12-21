@@ -16,9 +16,12 @@ interface DashboardShellProps {
 async function fetchFiles(folderId: string | null): Promise<{ files: FileItem[]; folders: Folder[] }> {
   const supabase = createClient()
 
+  const filesQuery = supabase.from("files").select("*").order("name")
+  const foldersQuery = supabase.from("folders").select("*").order("name")
+
   const [filesResult, foldersResult] = await Promise.all([
-    supabase.from("files").select("*").eq("folder_id", folderId).order("name"),
-    supabase.from("folders").select("*").eq("parent_id", folderId).order("name"),
+    folderId === null ? filesQuery.is("folder_id", null) : filesQuery.eq("folder_id", folderId),
+    folderId === null ? foldersQuery.is("parent_id", null) : foldersQuery.eq("parent_id", folderId),
   ])
 
   return {
