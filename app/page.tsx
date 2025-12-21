@@ -5,12 +5,12 @@ import { Cloud, Lock, Share2, Shield, Smartphone, Zap } from "lucide-react";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-background">
+    <div className="min-h-screen bg-gradient-to-b from-backgroun to-muted">
       {/* Header */}
-      <header className="border-b bg-muted-background backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b bg-muted backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Cloud className="h-8 w-8 text-indigo-600" />
+            <Cloud className="h-8 w-8 text-primary" />
             <span className="text-xl font-bold text-foreground">Supabytes</span>
           </div>
           <nav className="flex items-center gap-4">
