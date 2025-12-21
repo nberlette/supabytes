@@ -24,7 +24,7 @@ export function getFileIcon(mimeType: string | null): string {
   if (mimeType.startsWith("video/")) return "video"
   if (mimeType.startsWith("audio/")) return "audio"
   if (mimeType.includes("pdf")) return "pdf"
-  if (mimeType.includes("zip") || mimeType.includes("rar")) return "archive"
+  if (mimeType.includes("zip") || mimeType.includes("rar") || mimeType.includes("tar")) return "archive"
   if (mimeType.includes("document") || mimeType.includes("word")) return "doc"
   if (mimeType.includes("spreadsheet") || mimeType.includes("excel")) {
     return "spreadsheet"
