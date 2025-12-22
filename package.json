@@ -2,14 +2,14 @@
   "name": "supabytes",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://supabytes.vercel.app",
+  "repository": "https://github.com/nberlette/supabytes.git",
   "license": "MIT",
   "author": {
     "name": "Nicholas Berlette",
     "email": "nick@berlette.com",
     "url": "https://github.com/nberlette"
   },
-  "homepage": "https://supabytes.vercel.app",
-  "repository": "https://github.com/nberlette/supabytes.git",
   "scripts": {
     "build": "next build",
     "dev": "next dev",

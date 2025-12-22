@@ -6,29 +6,29 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 import {
-  IBM_Plex_Mono as V0_Font_IBM_Plex_Mono,
-  Merriweather as V0_Font_Merriweather,
-  Space_Grotesk as V0_Font_Space_Grotesk,
+  IBM_Plex_Mono,
+  Merriweather,
+  Space_Grotesk,
 } from "next/font/google";
 
 // Initialize fonts
-const _spaceGrotesk = V0_Font_Space_Grotesk({
+const _spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
 });
-const _ibmPlexMono = V0_Font_IBM_Plex_Mono({
+const _ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
   weight: ["100", "200", "300", "400", "500", "600", "700"],
 });
-const _merriweather = V0_Font_Merriweather({
+const _merriweather = Merriweather({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800", "900"],
 });
 
 export const metadata: Metadata = {
-  title: "Supabytes - Secure File Storage",
-  description: "Store, share, and access your files from anywhere",
-  generator: "v0.app",
+  title: "Supabytes - Secure Serverless Cloud Storage",
+  description: "Store, share, and access your files from anywhere with our globally-available edge network,",
+    generator: 'v0.app'
 };
 
 export default function RootLayout({
