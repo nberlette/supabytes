@@ -112,7 +112,7 @@ async function fetchBreadcrumbs(
   if (!folderId) return [{ id: null, name: "My Files" }];
 
   const supabase = createClient();
-  const breadcrumbs: BreadcrumbItem[] = [{ id: null, name: "My Files" }];
+  const breadcrumbs: BreadcrumbItem[] = [];
   let currentId: string | null = folderId;
 
   while (currentId) {
@@ -121,14 +121,14 @@ async function fetchBreadcrumbs(
     ).eq("id", currentId).single();
 
     if (data) {
-      breadcrumbs.push({ id: data.id, name: data.name });
+      breadcrumbs.unshift({ id: data.id, name: data.name });
       currentId = data.parent_id;
     } else {
       break;
     }
   }
 
-  return breadcrumbs;
+  return [{ id: null, name: "My Files" }, ...breadcrumbs];
 }
 
 export function DashboardShell({ userId, userEmail }: DashboardShellProps) {
