@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ConfirmDialog } from "./confirm-dialog";
+import { ConfirmDialog } from "./dialog/confirm";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 

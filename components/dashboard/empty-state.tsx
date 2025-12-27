@@ -3,8 +3,8 @@
 import { FolderPlus, Share2, Star, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { UploadDialog } from "./upload-dialog";
-import { CreateFolderDialog } from "./create-folder-dialog";
+import { UploadDialog } from "./dialog/upload";
+import { CreateFolderDialog } from "./dialog/create-folder";
 
 interface EmptyStateProps {
   currentFolder: string | null;

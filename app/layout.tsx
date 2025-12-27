@@ -27,8 +27,51 @@ const _merriweather = Merriweather({
 
 export const metadata: Metadata = {
   title: "Supabytes - Secure Serverless Cloud Storage",
-  description: "Store, share, and access your files from anywhere with our globally-available edge network,",
-    generator: 'v0.app'
+  description: "Store, share, and access your files from anywhere with our globally-available edge network, built on Supabase.",
+  keywords: [
+    "cloud storage",
+    "serverless storage",
+    "secure file storage",
+    "edge network",
+    "Supabase storage",
+    "file sharing",
+    "data backup",
+    "scalable storage solutions",
+    "global file access",
+    "encrypted storage",
+  ],
+  authors: [{ name: "Nicholas Berlette", url: "https://github.com/nberlette" }],
+  openGraph: {
+    title: "Supabytes - Secure Serverless Cloud Storage",
+    description: "Store, share, and access your files from anywhere with our globally-available edge network, built on Supabase.",
+    url: "https://supabytes.vercel.app",
+    siteName: "Supabytes",
+    images: [
+      {
+        url: "https://supabytes.vercel.app/og.png",
+        width: 1280,
+        height: 640,
+        alt: "Supabytes Open Graph Image",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Supabytes - Secure Serverless Cloud Storage",
+    description: "Store, share, and access your files from anywhere with our globally-available edge network, built on Supabase.",
+    images: ["https://supabytes.vercel.app/og.png"],
+  },
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon-16x16.png",
+    apple: "/apple-touch-icon.png",
+  },
+  publisher: "https://n.berlette.com",
+  pinterest: {
+    richPins: true,
+  },
 };
 
 export default function RootLayout({
@@ -43,7 +86,6 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="system"
           enableSystem
-          disableTransitionOnChange
         >
           {children}
           <Toaster />

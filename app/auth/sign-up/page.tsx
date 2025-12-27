@@ -57,12 +57,12 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10 bg-slate-50">
+    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10 bg-background">
       <div className="w-full max-w-sm">
         <div className="flex flex-col gap-6">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Cloud className="h-8 w-8 text-indigo-600" />
-            <span className="text-xl font-bold text-slate-900">Supabytes</span>
+            <Cloud className="h-8 w-8 text-primary" />
+            <span className="text-xl font-bold text-foreground">Supabytes</span>
           </div>
           <Card>
             <CardHeader>
@@ -114,7 +114,7 @@ export default function SignUpPage() {
                   Already have an account?{" "}
                   <Link
                     href="/auth/login"
-                    className="underline underline-offset-4 text-indigo-600"
+                    className="underline underline-offset-4 text-primary"
                   >
                     Sign in
                   </Link>

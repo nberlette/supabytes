@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { ConfirmDialog } from "./confirm-dialog";
+import { ConfirmDialog } from "./dialog/confirm";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 

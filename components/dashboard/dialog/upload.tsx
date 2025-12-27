@@ -33,8 +33,12 @@ interface UploadFile {
   error?: string;
 }
 
+function id(): string {
+  return crypto.randomUUID().split("-").pop()!;
+}
+
 function generateFileId(file: File): string {
-  return `${file.name}-${file.size}-${file.lastModified}-${Math.random()}`;
+  return `${file.name}-${file.size}-${file.lastModified}-${id()}`;
 }
 
 export function UploadDialog(

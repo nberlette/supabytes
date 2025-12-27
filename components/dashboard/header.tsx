@@ -21,8 +21,8 @@ import {
 } from "lucide-react";
 import { Fragment, useState } from "react";
 import type { BreadcrumbItem as BreadcrumbItemType } from "@/lib/types";
-import { UploadDialog } from "./upload-dialog";
-import { CreateFolderDialog } from "./create-folder-dialog";
+import { UploadDialog } from "./dialog/upload";
+import { CreateFolderDialog } from "./dialog/create-folder";
 
 interface HeaderProps {
   onMenuClick: () => void;

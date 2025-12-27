@@ -19,8 +19,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { ShareDialog } from "./share-dialog";
-import { ConfirmDialog } from "./confirm-dialog";
+import { ShareDialog } from "./dialog/share";
+import { ConfirmDialog } from "./dialog/confirm";
 import { cn } from "@/lib/utils";
 
 interface FileActionsProps {
