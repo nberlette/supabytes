@@ -5,11 +5,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
-import {
-  IBM_Plex_Mono,
-  Merriweather,
-  Space_Grotesk,
-} from "next/font/google";
+import { IBM_Plex_Mono, Merriweather, Space_Grotesk } from "next/font/google";
 
 // Initialize fonts
 const _spaceGrotesk = Space_Grotesk({
@@ -26,9 +22,8 @@ const _merriweather = Merriweather({
 });
 
 export const metadata: Metadata = {
-  title: "Supabytes - Secure Serverless Cloud Storage",
-  description: "Store, share, and access your files from anywhere with our globally-available edge network,",
-    generator: 'v0.app'
+  title: "Supabytes - Secure File Storage",
+  description: "Store, share, and access your files from anywhere",
 };
 
 export default function RootLayout({
@@ -38,6 +33,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta
+          name="theme-color"
+          content="#0f0f1a"
+          media="(prefers-color-scheme: dark)"
+        />
+        <meta
+          name="theme-color"
+          content="#f5f5ff"
+          media="(prefers-color-scheme: light)"
+        />
+      </head>
       <body className="font-sans antialiased">
         <ThemeProvider
           attribute="class"

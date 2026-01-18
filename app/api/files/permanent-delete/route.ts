@@ -52,7 +52,7 @@ export async function POST(request: Request) {
         .from("files")
         .select("storage_path")
         .eq("folder_id", folderId)
-        .eq("user_id", user.id);
+        .eq("user_id", user?.id);
 
       if (files) {
         for (const file of files) {
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
         .from("folders")
         .select("id")
         .eq("parent_id", folderId)
-        .eq("user_id", user.id);
+        .eq("user_id", user?.id);
 
       if (subfolders) {
         for (const subfolder of subfolders) {

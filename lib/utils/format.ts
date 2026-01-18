@@ -27,16 +27,29 @@ export function getFileIcon(mimeType: string | null): string {
   if (mimeType.includes("pdf")) return "pdf";
   if (
     mimeType.includes("zip") || mimeType.includes("rar") ||
-    mimeType.includes("tar")
+    mimeType.includes("tar") || mimeType.includes("br") ||
+    mimeType.includes("gz") || mimeType.includes("xz") ||
+    mimeType.includes("lz") || mimeType.includes("zstd")
   ) return "archive";
   if (mimeType.includes("document") || mimeType.includes("word")) return "doc";
-  if (mimeType.includes("spreadsheet") || mimeType.includes("excel")) {
+  if (
+    mimeType.includes("spreadsheet") || mimeType.includes("excel") ||
+    mimeType.includes("xlsx") || mimeType.includes("numbers")
+  ) {
     return "spreadsheet";
   }
-  if (mimeType.includes("presentation") || mimeType.includes("powerpoint")) {
+  if (
+    mimeType.includes("presentation") || mimeType.includes("powerpoint") ||
+    mimeType.includes("ppt") || mimeType.includes("keynote")
+  ) {
     return "presentation";
   }
-  if (mimeType.includes("text") || mimeType.includes("json")) return "text";
+  if (
+    mimeType.includes("yaml") || mimeType.includes("toml") ||
+    mimeType.includes("json") || mimeType.includes("json5") ||
+    mimeType.includes("jsonc")
+  ) return "data";
+  if (mimeType.includes("text")) return "text";
 
   return "file";
 }
