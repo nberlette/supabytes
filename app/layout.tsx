@@ -4,8 +4,8 @@ import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
-import "./globals.css";
 import { IBM_Plex_Mono, Merriweather, Space_Grotesk } from "next/font/google";
+import "./globals.css";
 
 // Initialize fonts
 const _spaceGrotesk = Space_Grotesk({
