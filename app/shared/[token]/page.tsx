@@ -37,17 +37,17 @@ export default async function SharedFilePage({ params }: PageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2 mb-8">
-          <Cloud className="h-8 w-8 text-indigo-600" />
-          <span className="text-xl font-bold text-slate-900">Supabytes</span>
+          <Cloud className="h-8 w-8 text-primary-foreground" />
+          <span className="text-xl font-bold text-foreground">Supabytes</span>
         </div>
 
         <Card>
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-indigo-100">
-              <FileIcon className="h-8 w-8 text-indigo-600" />
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-accent">
+              <FileIcon className="h-8 w-8 text-accent-foreground" />
             </div>
             <CardTitle className="text-xl">{file.name}</CardTitle>
             <CardDescription>{formatFileSize(file.size)}</CardDescription>
@@ -59,7 +59,7 @@ export default async function SharedFilePage({ params }: PageProps) {
                 Download File
               </Button>
             </Link>
-            <p className="text-xs text-center text-slate-500">
+            <p className="text-xs text-center text-muted-foreground">
               This file has been shared with you via Supabytes
             </p>
           </CardContent>

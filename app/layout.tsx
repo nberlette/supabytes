@@ -44,13 +44,14 @@ export default function RootLayout({
           content="#f5f5ff"
           media="(prefers-color-scheme: light)"
         />
+        <meta name="color-scheme" content="dark light" />
+        <link rel="manifest" href="/manifest.json" />
       </head>
       <body className="font-sans antialiased">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
-          disableTransitionOnChange
         >
           {children}
           <Toaster />
