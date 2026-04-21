@@ -1,5 +1,10 @@
 import { ApiRouteError } from "@/lib/api/server";
-import type { DashboardView, ShareTargetSummary, ShareTargetType } from "@/lib/api/contracts";
+import {
+  validateLogicalPathSegment,
+  type DashboardView,
+  type ShareTargetSummary,
+  type ShareTargetType,
+} from "@/lib/api/contracts";
 import type { FileItem, Folder, SharedLink } from "@/lib/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -42,10 +47,14 @@ export function normalizePathSegments(segments?: string[] | null) {
     .map((segment) => decodeURIComponent(segment).trim())
     .filter(Boolean)
     .map((segment) => {
-      if (segment === "." || segment === ".." || segment.includes("/")) {
+      if (segment.includes("/")) {
         throw new ApiRouteError(400, "invalid_path", "Invalid path segment.");
       }
-      return segment;
+      try {
+        return validateLogicalPathSegment(segment);
+      } catch {
+        throw new ApiRouteError(400, "invalid_path", "Invalid path segment.");
+      }
     });
 }
 
@@ -652,7 +661,9 @@ export async function isFolderDescendantOf(
 }
 
 export async function generateShortShareToken(supabase: AnySupabase) {
-  for (let index = 0; index < MAX_TOKEN_GENERATION_ATTEMPTS; index++) {
+  for (let attemptNumber = 0;
+    attemptNumber < MAX_TOKEN_GENERATION_ATTEMPTS;
+    attemptNumber++) {
     const tokenChars: string[] = [];
     const alphabetLength = SHORT_TOKEN_ALPHABET.length;
     const maxUnbiasedValue = Math.floor(256 / alphabetLength) * alphabetLength;

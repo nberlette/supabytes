@@ -15,7 +15,7 @@ ALTER COLUMN
 UPDATE shared_links
 SET
   target_type = 'file',
-  short_token = SUBSTRING(md5(id::text) FROM 1 FOR 8)
+  short_token = SUBSTRING(REPLACE(gen_random_uuid()::text, '-', '') FROM 1 FOR 8)
 WHERE
   target_type IS NULL
   OR short_token IS NULL;

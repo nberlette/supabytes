@@ -61,14 +61,18 @@ export interface PreferencesPayload {
   preferences: UserPreferences | null;
 }
 
+export function validateLogicalPathSegment(segment: string) {
+  if (segment === "." || segment === "..") {
+    throw new Error("Invalid path segment.");
+  }
+  return segment;
+}
+
 export function encodeApiPath(path: string | null | undefined) {
   if (!path) return "";
-  return path.split("/").filter(Boolean).map((segment) => {
-    if (segment === "." || segment === "..") {
-      throw new Error("Invalid path segment.");
-    }
-    return encodeURIComponent(segment);
-  }).join("/");
+  return path.split("/").filter(Boolean).map((segment) =>
+    encodeURIComponent(validateLogicalPathSegment(segment))
+  ).join("/");
 }
 
 export function joinLogicalPath(...parts: Array<string | null | undefined>) {
