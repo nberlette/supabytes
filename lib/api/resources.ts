@@ -575,7 +575,8 @@ export async function permanentlyDeleteFolderTree(
 }
 
 export function makeStoragePath(userId: string, name: string) {
-  const safeName = name.replace(/[^\w.\-]+/g, "-");
+  const safeName = name.replace(/\.\.+/g, "-").replace(/[^\w.-]+/g, "-") ||
+    "file";
   return `${userId}/${Date.now()}-${crypto.randomUUID()}-${safeName}`;
 }
 
@@ -652,10 +653,20 @@ export async function isFolderDescendantOf(
 
 export async function generateShortShareToken(supabase: AnySupabase) {
   for (let attempt = 0; attempt < MAX_TOKEN_GENERATION_ATTEMPTS; attempt++) {
-    const bytes = crypto.getRandomValues(new Uint8Array(8));
-    const token = Array.from(bytes).map((value) =>
-      SHORT_TOKEN_ALPHABET[value % SHORT_TOKEN_ALPHABET.length]
-    ).join("");
+    const tokenChars: string[] = [];
+    const alphabetLength = SHORT_TOKEN_ALPHABET.length;
+    const maxUnbiasedValue = Math.floor(256 / alphabetLength) * alphabetLength;
+
+    while (tokenChars.length < 8) {
+      const bytes = crypto.getRandomValues(new Uint8Array(8));
+      for (const value of bytes) {
+        if (value >= maxUnbiasedValue) continue;
+        tokenChars.push(SHORT_TOKEN_ALPHABET[value % alphabetLength]);
+        if (tokenChars.length === 8) break;
+      }
+    }
+
+    const token = tokenChars.join("");
 
     const { data } = await supabase.from("shared_links").select("id").eq(
       "short_token",

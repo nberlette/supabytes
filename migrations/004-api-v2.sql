@@ -14,8 +14,8 @@ ALTER COLUMN
 
 UPDATE shared_links
 SET
-  target_type = COALESCE(target_type, 'file'),
-  short_token = COALESCE(short_token, SUBSTRING(REPLACE(id::text, '-', '') FROM 1 FOR 8))
+  target_type = 'file',
+  short_token = SUBSTRING(REPLACE(id::text, '-', '') FROM 1 FOR 8)
 WHERE
   target_type IS NULL
   OR short_token IS NULL;

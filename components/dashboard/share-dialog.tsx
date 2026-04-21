@@ -72,7 +72,7 @@ export function ShareDialog({ open, onOpenChange, file }: ShareDialogProps) {
   const shareUrl = sharedLink
     ? `${
       typeof window !== "undefined" ? window.location.origin : ""
-    }/s/${sharedLink.short_token || sharedLink.token}`
+    }/s/${encodeURIComponent(sharedLink.short_token || sharedLink.token)}`
     : "";
 
   const copyLink = () => {

@@ -33,6 +33,7 @@ interface HeaderProps {
   currentFolder: string | null;
   onRefresh: () => void;
   breadcrumbs: BreadcrumbItemType[];
+  /** Navigates using the folder's logical path rather than its UUID. */
   onNavigate: (folderPath: string | null) => void;
   currentView?: "files" | "shared" | "trash" | "favorites";
 }
