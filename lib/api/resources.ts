@@ -575,7 +575,7 @@ export async function permanentlyDeleteFolderTree(
 }
 
 export function makeStoragePath(userId: string, name: string) {
-  const safeName = name.replace(/\.\.+/g, "-").replace(/[^\w.-]+/g, "-") ||
+  const safeName = name.replace(/\.\.+/g, "-").replace(/[^\w-]+/g, "-") ||
     "file";
   return `${userId}/${Date.now()}-${crypto.randomUUID()}-${safeName}`;
 }
@@ -652,7 +652,7 @@ export async function isFolderDescendantOf(
 }
 
 export async function generateShortShareToken(supabase: AnySupabase) {
-  for (let attempt = 0; attempt < MAX_TOKEN_GENERATION_ATTEMPTS; attempt++) {
+  for (let index = 0; index < MAX_TOKEN_GENERATION_ATTEMPTS; index++) {
     const tokenChars: string[] = [];
     const alphabetLength = SHORT_TOKEN_ALPHABET.length;
     const maxUnbiasedValue = Math.floor(256 / alphabetLength) * alphabetLength;
