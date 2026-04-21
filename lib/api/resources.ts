@@ -17,9 +17,9 @@ type DbSharedLink = Omit<SharedLink, "short_token" | "target_type" | "folder_id"
   short_token: string;
 };
 
-const ROOT_UUID = "00000000-0000-0000-0000-000000000000";
 const SHORT_TOKEN_ALPHABET =
   "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+const MAX_TOKEN_GENERATION_ATTEMPTS = 10;
 
 export interface FolderResolution {
   folder: DbFolder | null;
@@ -651,7 +651,7 @@ export async function isFolderDescendantOf(
 }
 
 export async function generateShortShareToken(supabase: AnySupabase) {
-  for (let attempt = 0; attempt < 10; attempt++) {
+  for (let attempt = 0; attempt < MAX_TOKEN_GENERATION_ATTEMPTS; attempt++) {
     const bytes = crypto.getRandomValues(new Uint8Array(8));
     const token = Array.from(bytes).map((value) =>
       SHORT_TOKEN_ALPHABET[value % SHORT_TOKEN_ALPHABET.length]

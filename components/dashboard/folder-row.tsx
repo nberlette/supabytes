@@ -27,6 +27,7 @@ import { bulkDelete, runBulkOperation } from "@/lib/api/client";
 
 interface FolderRowProps {
   folder: Folder;
+  /** Navigates using the folder's logical path rather than its UUID. */
   onNavigate: (folderPath: string | null) => void;
   onRefresh: () => void;
   isSelected?: boolean;
