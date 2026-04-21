@@ -30,10 +30,10 @@ export interface ShareTargetSummary {
   size?: number;
 }
 
-export interface ApiSharedLink extends SharedLink {
+export type ApiSharedLink = SharedLink & {
   target: ShareTargetSummary;
   url: string;
-}
+};
 
 export interface FolderListingData {
   folder: Folder | null;
@@ -63,7 +63,12 @@ export interface PreferencesPayload {
 
 export function encodeApiPath(path: string | null | undefined) {
   if (!path) return "";
-  return path.split("/").filter(Boolean).map(encodeURIComponent).join("/");
+  return path.split("/").filter(Boolean).map((segment) => {
+    if (segment === "." || segment === "..") {
+      throw new Error("Invalid path segment.");
+    }
+    return encodeURIComponent(segment);
+  }).join("/");
 }
 
 export function joinLogicalPath(...parts: Array<string | null | undefined>) {

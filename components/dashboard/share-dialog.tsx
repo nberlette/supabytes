@@ -14,7 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Copy, ExternalLink } from "lucide-react";
-import type { FileItem, SharedLink } from "@/lib/types";
+import type { FileItem } from "@/lib/types";
+import type { ApiSharedLink } from "@/lib/api/contracts";
 import { createShare, deleteShare, listShares } from "@/lib/api/client";
 
 interface ShareDialogProps {
@@ -24,7 +25,7 @@ interface ShareDialogProps {
 }
 
 export function ShareDialog({ open, onOpenChange, file }: ShareDialogProps) {
-  const [sharedLink, setSharedLink] = useState<SharedLink | null>(null);
+  const [sharedLink, setSharedLink] = useState<ApiSharedLink | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {

@@ -28,11 +28,8 @@ export interface Folder {
   updated_at: string;
 }
 
-export interface SharedLink {
+interface SharedLinkBase {
   id: string;
-  file_id: string | null;
-  folder_id: string | null;
-  target_type: "file" | "folder";
   token: string;
   short_token: string;
   expires_at: string | null;
@@ -40,6 +37,18 @@ export interface SharedLink {
   created_at: string;
   url?: string;
 }
+
+export type SharedLink =
+  | (SharedLinkBase & {
+    file_id: string;
+    folder_id: null;
+    target_type: "file";
+  })
+  | (SharedLinkBase & {
+    file_id: null;
+    folder_id: string;
+    target_type: "folder";
+  });
 
 export interface UserPreferences {
   id: string;
