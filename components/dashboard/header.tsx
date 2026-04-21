@@ -33,7 +33,7 @@ interface HeaderProps {
   currentFolder: string | null;
   onRefresh: () => void;
   breadcrumbs: BreadcrumbItemType[];
-  onNavigate: (folderId: string | null) => void;
+  onNavigate: (folderPath: string | null) => void;
   currentView?: "files" | "shared" | "trash" | "favorites";
 }
 
@@ -84,7 +84,7 @@ export function Header({
                             .join("/")}
                         onClick={(e) => {
                           e.preventDefault();
-                          onNavigate(item.id);
+                          onNavigate(item.path);
                         }}
                       >
                         {item.name}

@@ -13,6 +13,7 @@ import { ConfirmDialog } from "./confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { buildDownloadUrl, bulkDelete, runBulkOperation } from "@/lib/api/client";
 
 interface FileExplorerProps {
   files: FileItem[];
@@ -20,7 +21,7 @@ interface FileExplorerProps {
   viewMode: "grid" | "list";
   isLoading: boolean;
   currentFolder: string | null;
-  onNavigate: (folderId: string | null) => void;
+  onNavigate: (folderPath: string | null) => void;
   onRefresh: () => void;
   userId: string;
   currentView?: "files" | "shared" | "trash" | "favorites";
@@ -103,23 +104,14 @@ export function FileExplorer({
       const folderIds = item.type === "folder" ? [item.id] : [];
 
       try {
-        const res = await fetch("/api/files/move", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fileIds,
-            folderIds,
-            targetFolderId,
-          }),
+        await runBulkOperation({
+          action: "move",
+          fileIds,
+          folderIds,
+          targetFolderId,
         });
-
-        if (res.ok) {
-          toast.success("Item moved successfully");
-          onRefresh();
-        } else {
-          const data = await res.json();
-          toast.error(data.errors?.[0] || "Failed to move item");
-        }
+        toast.success("Item moved successfully");
+        onRefresh();
       } catch {
         toast.error("Failed to move item");
       }
@@ -132,30 +124,18 @@ export function FileExplorer({
 
     setIsDeleting(true);
     try {
-      const endpoint = isTrashView
-        ? "/api/files/permanent-delete"
-        : "/api/files/bulk-delete";
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fileIds: Array.from(selectedFiles),
-          folderIds: Array.from(selectedFolders),
-        }),
+      await bulkDelete({
+        fileIds: Array.from(selectedFiles),
+        folderIds: Array.from(selectedFolders),
+        permanent: isTrashView,
       });
-
-      if (res.ok) {
-        toast.success(
-          isTrashView
-            ? `Permanently deleted ${selectedCount} item(s)`
-            : `Moved ${selectedCount} item(s) to trash`,
-        );
-        clearSelection();
-        onRefresh();
-      } else {
-        const data = await res.json();
-        toast.error(data.errors?.[0] || "Failed to delete some items");
-      }
+      toast.success(
+        isTrashView
+          ? `Permanently deleted ${selectedCount} item(s)`
+          : `Moved ${selectedCount} item(s) to trash`,
+      );
+      clearSelection();
+      onRefresh();
     } catch {
       toast.error("Failed to delete items");
     } finally {
@@ -175,23 +155,14 @@ export function FileExplorer({
     if (selectedCount === 0) return;
 
     try {
-      const res = await fetch("/api/files/restore", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fileIds: Array.from(selectedFiles),
-          folderIds: Array.from(selectedFolders),
-        }),
+      await runBulkOperation({
+        action: "restore",
+        fileIds: Array.from(selectedFiles),
+        folderIds: Array.from(selectedFolders),
       });
-
-      if (res.ok) {
-        toast.success(`Restored ${selectedCount} item(s)`);
-        clearSelection();
-        onRefresh();
-      } else {
-        const data = await res.json();
-        toast.error(data.errors?.[0] || "Failed to restore items");
-      }
+      toast.success(`Restored ${selectedCount} item(s)`);
+      clearSelection();
+      onRefresh();
     } catch {
       toast.error("Failed to restore items");
     }
@@ -215,24 +186,15 @@ export function FileExplorer({
         : Array.from(selectedFolders);
 
       try {
-        const res = await fetch("/api/files/move", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fileIds,
-            folderIds,
-            targetFolderId,
-          }),
+        await runBulkOperation({
+          action: "move",
+          fileIds,
+          folderIds,
+          targetFolderId,
         });
-
-        if (res.ok) {
-          toast.success("Items moved successfully");
-          clearSelection();
-          onRefresh();
-        } else {
-          const data = await res.json();
-          toast.error(data.errors?.[0] || "Failed to move items");
-        }
+        toast.success("Items moved successfully");
+        clearSelection();
+        onRefresh();
       } catch {
         toast.error("Failed to move items");
       } finally {
@@ -245,10 +207,10 @@ export function FileExplorer({
   );
 
   const handleBulkDownload = useCallback(() => {
-    selectedFiles.forEach((fileId) => {
-      window.open(`/api/files/download/${fileId}`, "_blank");
+    files.filter((file) => selectedFiles.has(file.id)).forEach((file) => {
+      window.open(buildDownloadUrl(file.path), "_blank");
     });
-  }, [selectedFiles]);
+  }, [files, selectedFiles]);
 
   const handleSingleFileMove = useCallback((fileId: string) => {
     setSingleMoveItem({ type: "file", id: fileId });

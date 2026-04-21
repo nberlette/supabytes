@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 
 export type TopicType = "user" | "folder";
 
@@ -36,6 +36,7 @@ export default function useFileSync(
   folderIds: string[] = [],
 ): void {
   const channelsRef = useRef<any[]>([]);
+  const supabase = createClient();
 
   useEffect(() => {
     if (!userId) return;
@@ -44,23 +45,23 @@ export default function useFileSync(
     supabase.realtime.setAuth();
 
     // Subscribe to user channel
-    const topic = `user:${userId}`;
+    const topic: RealtimeTopic = `user:${userId}`;
     const userChannel = supabase
       .channel(topic, { config: { private: true } })
       .on(
         "broadcast",
         { event: "INSERT" },
-        (payload) => onEvent({ op: "INSERT", topic, payload }),
+        (payload: RealtimePayload) => onEvent({ op: "INSERT", topic, payload }),
       )
       .on(
         "broadcast",
         { event: "UPDATE" },
-        (payload) => onEvent({ op: "UPDATE", topic, payload }),
+        (payload: RealtimePayload) => onEvent({ op: "UPDATE", topic, payload }),
       )
       .on(
         "broadcast",
         { event: "DELETE" },
-        (payload) => onEvent({ op: "DELETE", topic, payload }),
+        (payload: RealtimePayload) => onEvent({ op: "DELETE", topic, payload }),
       )
       .subscribe();
 
@@ -68,23 +69,23 @@ export default function useFileSync(
 
     // Subscribe to folder channels
     folderIds.forEach((folderId) => {
-      const topic = `folder:${folderId}`;
+        const topic: RealtimeTopic = `folder:${folderId}`;
       const ch = supabase
         .channel(topic, { config: { private: true } })
         .on(
           "broadcast",
           { event: "INSERT" },
-          (payload) => onEvent({ op: "INSERT", topic, payload }),
+          (payload: RealtimePayload) => onEvent({ op: "INSERT", topic, payload }),
         )
         .on(
           "broadcast",
           { event: "UPDATE" },
-          (payload) => onEvent({ op: "UPDATE", topic, payload }),
+          (payload: RealtimePayload) => onEvent({ op: "UPDATE", topic, payload }),
         )
         .on(
           "broadcast",
           { event: "DELETE" },
-          (payload) => onEvent({ op: "DELETE", topic, payload }),
+          (payload: RealtimePayload) => onEvent({ op: "DELETE", topic, payload }),
         )
         .subscribe();
       channelsRef.current.push(ch);

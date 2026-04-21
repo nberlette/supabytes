@@ -1,6 +1,7 @@
 export interface FileItem {
   id: string;
   name: string;
+  path: string;
   storage_path: string;
   size: number;
   mime_type: string | null;
@@ -17,6 +18,7 @@ export interface FileItem {
 export interface Folder {
   id: string;
   name: string;
+  path: string;
   parent_id: string | null;
   user_id: string;
   is_trashed: boolean;
@@ -28,11 +30,15 @@ export interface Folder {
 
 export interface SharedLink {
   id: string;
-  file_id: string;
+  file_id: string | null;
+  folder_id: string | null;
+  target_type: "file" | "folder";
   token: string;
+  short_token: string;
   expires_at: string | null;
   download_count: number;
   created_at: string;
+  url?: string;
 }
 
 export interface UserPreferences {
@@ -48,6 +54,7 @@ export interface UserPreferences {
 export interface BreadcrumbItem {
   id: string | null;
   name: string;
+  path: string | null;
 }
 
 export type SelectableItem = { type: "file"; item: FileItem } | {

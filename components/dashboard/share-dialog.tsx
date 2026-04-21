@@ -12,10 +12,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Copy, ExternalLink } from "lucide-react";
 import type { FileItem, SharedLink } from "@/lib/types";
+import { createShare, deleteShare, listShares } from "@/lib/api/client";
 
 interface ShareDialogProps {
   open: boolean;
@@ -34,37 +34,24 @@ export function ShareDialog({ open, onOpenChange, file }: ShareDialogProps) {
   }, [open, file.id]);
 
   const fetchExistingLink = async () => {
-    const supabase = createClient();
-    const { data } = await supabase.from("shared_links").select("*").eq(
-      "file_id",
-      file.id,
-    ).single();
+    const response = await listShares();
+    const existing = response.data.shares.find((share) =>
+      share.target_type === "file" && share.target.path === file.path
+    );
 
-    if (data) {
-      setSharedLink(data);
+    if (existing) {
+      setSharedLink(existing);
     }
   };
 
   const createShareLink = async () => {
     setIsLoading(true);
-    const supabase = createClient();
-
-    const token = crypto.randomUUID();
-
-    const { data, error } = await supabase
-      .from("shared_links")
-      .insert({
-        file_id: file.id,
-        token,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      toast.error("Failed to create share link");
-    } else {
-      setSharedLink(data);
+    try {
+      const response = await createShare({ type: "file", filePath: file.path });
+      setSharedLink(response.data.share);
       toast.success("Share link created");
+    } catch {
+      toast.error("Failed to create share link");
     }
 
     setIsLoading(false);
@@ -73,24 +60,19 @@ export function ShareDialog({ open, onOpenChange, file }: ShareDialogProps) {
   const deleteShareLink = async () => {
     if (!sharedLink) return;
 
-    const supabase = createClient();
-    const { error } = await supabase.from("shared_links").delete().eq(
-      "id",
-      sharedLink.id,
-    );
-
-    if (error) {
-      toast.error("Failed to delete share link");
-    } else {
+    try {
+      await deleteShare(sharedLink.short_token || sharedLink.token);
       setSharedLink(null);
       toast.success("Share link deleted");
+    } catch {
+      toast.error("Failed to delete share link");
     }
   };
 
   const shareUrl = sharedLink
     ? `${
       typeof window !== "undefined" ? window.location.origin : ""
-    }/shared/${sharedLink.token}`
+    }/s/${sharedLink.short_token || sharedLink.token}`
     : "";
 
   const copyLink = () => {

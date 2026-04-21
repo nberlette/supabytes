@@ -3,11 +3,11 @@
 import useSWR from "swr";
 import { HardDrive } from "lucide-react";
 import { formatFileSize } from "@/lib/utils/format";
+import { fetchStorageSummary } from "@/lib/api/client";
 
 async function fetchStorage() {
-  const res = await fetch("/api/storage");
-  if (!res.ok) throw new Error("Failed to fetch storage");
-  return res.json();
+  const res = await fetchStorageSummary();
+  return res.data;
 }
 
 export function StorageMeter() {
