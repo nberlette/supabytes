@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import {
   buildShareTargetSummary,
   generateShortShareToken,
+  listOwnedSharedLinks,
   normalizePathSegments,
   resolveFilePath,
   resolveFolderPath,
@@ -11,14 +12,7 @@ import { ApiRouteError, handleRouteError, jsonResponse, requireUser } from "@/li
 export async function GET() {
   try {
     const { supabase, user } = await requireUser();
-    const { data, error } = await supabase.from("shared_links").select("*").order(
-      "created_at",
-      { ascending: false },
-    );
-
-    if (error) {
-      throw new ApiRouteError(500, "share_lookup_failed", error.message);
-    }
+    const data = await listOwnedSharedLinks(supabase, user.id);
 
     const shares = await Promise.all((data || []).map(async (link) => ({
       ...link,
