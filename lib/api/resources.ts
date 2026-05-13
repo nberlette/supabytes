@@ -218,6 +218,12 @@ export async function listOwnedSharedLinks(
   return (data || []) as DbSharedLink[];
 }
 
+/**
+ * Deduplicates rows returned from join-based shared resource queries.
+ * When a file or folder has multiple share rows, PostgREST can surface repeated
+ * parent records; keeping the last occurrence restores the single-resource view
+ * expected by the dashboard.
+ */
 function uniqueById<T extends { id: string }>(items: T[]) {
   return Array.from(new Map(items.map((item) => [item.id, item])).values());
 }

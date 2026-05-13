@@ -12,6 +12,8 @@ ALTER TABLE
 ALTER COLUMN
   file_id DROP NOT NULL;
 
+CREATE INDEX IF NOT EXISTS idx_shared_links_short_token_lookup ON shared_links(short_token);
+
 DO $$
 DECLARE
   share_record RECORD;
