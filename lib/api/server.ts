@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 
+const HEXADECIMAL_RADIX = 16;
+
 export class ApiRouteError extends Error {
   status: number;
   code: string;
@@ -89,7 +91,7 @@ export function buildAttachmentContentDisposition(filename: string) {
     .replace(/["\\]/g, "\\$&") || "download";
   const encoded = encodeURIComponent(filename).replace(
     /['()*]/g,
-    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
+    (char) => `%${char.charCodeAt(0).toString(HEXADECIMAL_RADIX).toUpperCase()}`,
   );
 
   return `attachment; filename="${fallback}"; filename*=UTF-8''${encoded}`;
