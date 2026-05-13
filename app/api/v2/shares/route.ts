@@ -12,7 +12,7 @@ import { ApiRouteError, handleRouteError, jsonResponse, requireUser } from "@/li
 export async function GET() {
   try {
     const { supabase, user } = await requireUser();
-    const data = await listOwnedSharedLinks(supabase, user.id);
+    const data = await listOwnedSharedLinks(supabase);
 
     const shares = await Promise.all((data || []).map(async (link) => ({
       ...link,

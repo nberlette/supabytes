@@ -195,38 +195,19 @@ export async function getFolderPathById(
   return cache.resolveFolderPath(folderId);
 }
 
-type SharedLinksRelationRow = {
-  shared_links: DbSharedLink[] | null;
-};
-
 export async function listOwnedSharedLinks(
   supabase: AnySupabase,
-  userId: string,
 ) {
-  const [fileSharesResult, folderSharesResult] = await Promise.all([
-    supabase.from("files").select("shared_links(*)").eq("user_id", userId),
-    supabase.from("folders").select("shared_links(*)").eq("user_id", userId),
-  ]);
+  const { data, error } = await supabase.from("shared_links").select("*").order(
+    "created_at",
+    { ascending: false },
+  );
 
-  if (fileSharesResult.error || folderSharesResult.error) {
-    throw new ApiRouteError(
-      500,
-      "share_lookup_failed",
-      fileSharesResult.error?.message || folderSharesResult.error?.message ||
-        "Failed to load shared links.",
-    );
+  if (error) {
+    throw new ApiRouteError(500, "share_lookup_failed", error.message);
   }
 
-  return [
-    ...((fileSharesResult.data || []) as SharedLinksRelationRow[]).flatMap((row) =>
-      row.shared_links || []
-    ),
-    ...((folderSharesResult.data || []) as SharedLinksRelationRow[]).flatMap((row) =>
-      row.shared_links || []
-    ),
-  ].sort((left, right) =>
-    new Date(right.created_at).getTime() - new Date(left.created_at).getTime()
-  );
+  return (data || []) as DbSharedLink[];
 }
 
 export function toApiFolder(folder: DbFolder, path: string): Folder {
@@ -410,7 +391,7 @@ export async function listFolderChildren(
     };
   }
 
-  const sharedLinks = await listOwnedSharedLinks(supabase, userId);
+  const sharedLinks = await listOwnedSharedLinks(supabase);
 
   const fileIds = (sharedLinks || []).filter((link) => link.target_type === "file")
     .map((link) => link.file_id).filter(Boolean);
