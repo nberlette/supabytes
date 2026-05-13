@@ -1,4 +1,3 @@
-import { type NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 export class ApiRouteError extends Error {
@@ -82,4 +81,16 @@ export function applyMetadataHeaders(
     }
   }
   return headers;
+}
+
+export function buildAttachmentContentDisposition(filename: string) {
+  const fallback = filename
+    .replace(/[\u0000-\u001F\u007F]/g, "")
+    .replace(/["\\]/g, "\\$&") || "download";
+  const encoded = encodeURIComponent(filename).replace(
+    /['()*]/g,
+    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
+
+  return `attachment; filename="${fallback}"; filename*=UTF-8''${encoded}`;
 }

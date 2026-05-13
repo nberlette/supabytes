@@ -12,13 +12,58 @@ ALTER TABLE
 ALTER COLUMN
   file_id DROP NOT NULL;
 
-UPDATE shared_links
-SET
-  target_type = 'file',
-  short_token = SUBSTRING(REPLACE(gen_random_uuid()::text, '-', '') FROM 1 FOR 8)
-WHERE
-  target_type IS NULL
-  OR short_token IS NULL;
+DO $$
+DECLARE
+  share_record RECORD;
+  generated_token TEXT;
+BEGIN
+  FOR share_record IN
+    SELECT
+      id,
+      target_type,
+      short_token
+    FROM
+      shared_links
+    WHERE
+      target_type IS NULL
+      OR short_token IS NULL
+  LOOP
+    generated_token := share_record.short_token;
+
+    IF generated_token IS NULL OR EXISTS (
+      SELECT
+        1
+      FROM
+        shared_links
+      WHERE
+        short_token = generated_token
+        AND id <> share_record.id
+    ) THEN
+      LOOP
+        generated_token := SUBSTRING(
+          REPLACE(gen_random_uuid()::text, '-', '')
+          FROM 1 FOR 8
+        );
+        EXIT WHEN NOT EXISTS (
+          SELECT
+            1
+          FROM
+            shared_links
+          WHERE
+            short_token = generated_token
+            AND id <> share_record.id
+        );
+      END LOOP;
+    END IF;
+
+    UPDATE shared_links
+    SET
+      target_type = COALESCE(target_type, 'file'),
+      short_token = generated_token
+    WHERE
+      id = share_record.id;
+  END LOOP;
+END $$;
 
 ALTER TABLE
   shared_links

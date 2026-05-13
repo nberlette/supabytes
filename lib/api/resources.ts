@@ -44,7 +44,13 @@ function queryByOptionalParent<T extends "folders" | "files">(
 
 export function normalizePathSegments(segments?: string[] | null) {
   return (segments || [])
-    .map((segment) => decodeURIComponent(segment).trim())
+    .map((segment) => {
+      try {
+        return decodeURIComponent(segment).trim();
+      } catch {
+        throw new ApiRouteError(400, "invalid_path", "Invalid path segment.");
+      }
+    })
     .filter(Boolean)
     .map((segment) => {
       if (segment.includes("/")) {
@@ -186,6 +192,8 @@ export async function createFolderPathCache(
   };
 }
 
+type FolderPathCache = Awaited<ReturnType<typeof createFolderPathCache>>;
+
 export async function getFolderPathById(
   supabase: AnySupabase,
   userId: string,
@@ -208,6 +216,10 @@ export async function listOwnedSharedLinks(
   }
 
   return (data || []) as DbSharedLink[];
+}
+
+function uniqueById<T extends { id: string }>(items: T[]) {
+  return Array.from(new Map(items.map((item) => [item.id, item])).values());
 }
 
 export function toApiFolder(folder: DbFolder, path: string): Folder {
@@ -391,46 +403,44 @@ export async function listFolderChildren(
     };
   }
 
-  const sharedLinks = await listOwnedSharedLinks(supabase);
+  const [filesResult, foldersResult] = await Promise.all([
+    supabase.from("files").select("*, shared_links!inner(id)").eq("user_id", userId).eq(
+      "is_trashed",
+      false,
+    ).order("name"),
+    supabase.from("folders").select("*, shared_links!inner(id)").eq("user_id", userId).eq(
+      "is_trashed",
+      false,
+    ).order("name"),
+  ]);
 
-  const fileIds = (sharedLinks || []).filter((link) => link.target_type === "file")
-    .map((link) => link.file_id).filter(Boolean);
-  const folderIds = (sharedLinks || []).filter((link) => link.target_type === "folder")
-    .map((link) => link.folder_id).filter(Boolean);
-
-  if (fileIds.length === 0 && folderIds.length === 0) {
-    return {
-      folder: null,
-      files: [],
-      folders: [],
-      breadcrumbs: [{ id: null, name: "Shared", path: null }],
-    };
+  if (filesResult.error || foldersResult.error) {
+    throw new ApiRouteError(
+      500,
+      "share_lookup_failed",
+      filesResult.error?.message || foldersResult.error?.message ||
+        "Failed to load shared resources.",
+    );
   }
 
-  const [filesResult, foldersResult] = await Promise.all([
-    fileIds.length > 0
-      ? supabase.from("files").select("*").eq("user_id", userId).eq(
-        "is_trashed",
-        false,
-      ).in("id", fileIds).order("name")
-      : Promise.resolve({ data: [] as DbFile[] }),
-    folderIds.length > 0
-      ? supabase.from("folders").select("*").eq("user_id", userId).eq(
-        "is_trashed",
-        false,
-      ).in("id", folderIds).order("name")
-      : Promise.resolve({ data: [] as DbFolder[] }),
-  ]);
+  const files = uniqueById(
+    ((filesResult.data || []) as Array<DbFile & { shared_links?: Array<{ id: string }> }>)
+      .map(({ shared_links: _sharedLinks, ...file }) => file as DbFile),
+  );
+  const folders = uniqueById(
+    ((foldersResult.data || []) as Array<DbFolder & { shared_links?: Array<{ id: string }> }>)
+      .map(({ shared_links: _sharedLinks, ...folder }) => folder as DbFolder),
+  );
 
   return {
     folder: null,
-    files: (filesResult.data || []).map((file) =>
-      toApiFile(file as DbFile, pathCache.resolveFilePath(file as DbFile))
+    files: files.map((file) =>
+      toApiFile(file, pathCache.resolveFilePath(file))
     ),
-    folders: (foldersResult.data || []).map((folder) =>
+    folders: folders.map((folder) =>
       toApiFolder(
-        folder as DbFolder,
-        pathCache.resolveFolderPath((folder as DbFolder).id),
+        folder,
+        pathCache.resolveFolderPath(folder.id),
       )
     ),
     breadcrumbs: [{ id: null, name: "Shared", path: null }],
@@ -709,8 +719,9 @@ export async function buildShareTargetSummary(
   supabase: AnySupabase,
   userId: string,
   link: DbSharedLink,
+  pathCache?: FolderPathCache,
 ): Promise<ShareTargetSummary> {
-  const pathCache = await createFolderPathCache(supabase, userId);
+  const resolvedPathCache = pathCache || await createFolderPathCache(supabase, userId);
 
   if (link.target_type === "folder" && link.folder_id) {
     const { data: folder } = await supabase.from("folders").select("*").eq(
@@ -726,7 +737,7 @@ export async function buildShareTargetSummary(
       id: folder.id,
       type: "folder",
       name: folder.name,
-      path: pathCache.resolveFolderPath(folder.id),
+      path: resolvedPathCache.resolveFolderPath(folder.id),
     };
   }
 
@@ -743,7 +754,7 @@ export async function buildShareTargetSummary(
     id: file.id,
     type: "file",
     name: file.name,
-    path: pathCache.resolveFilePath(file as DbFile),
+    path: resolvedPathCache.resolveFilePath(file as DbFile),
     mime_type: file.mime_type,
     size: file.size,
   };

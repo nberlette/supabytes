@@ -38,14 +38,15 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       .filter(Boolean) || [];
 
     const listing = await listFolderChildren(supabase, user.id, pathSegments, view);
+    const folders = listing.folders.filter((folder) =>
+      !excludedFolderIds.includes(folder.id)
+    );
 
     return jsonResponse(
       {
         folder: listing.folder,
         files: listing.files,
-        folders: listing.folders.filter((folder) =>
-          !excludedFolderIds.includes(folder.id)
-        ),
+        folders,
       },
       {
         meta: {
@@ -53,8 +54,8 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
           breadcrumbs: listing.breadcrumbs,
           counts: {
             files: listing.files.length,
-            folders: listing.folders.length,
-            total: listing.files.length + listing.folders.length,
+            folders: folders.length,
+            total: listing.files.length + folders.length,
           },
         },
       },

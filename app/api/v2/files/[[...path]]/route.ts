@@ -14,6 +14,7 @@ import {
 import {
   ApiRouteError,
   applyMetadataHeaders,
+  buildAttachmentContentDisposition,
   handleRouteError,
   jsonResponse,
   requireUser,
@@ -62,7 +63,7 @@ function createFileHeaders(file: {
   const headers = new Headers();
   applyMetadataHeaders(headers, {
     "Content-Type": file.mime_type || "application/octet-stream",
-    "Content-Disposition": `attachment; filename="${file.name}"`,
+    "Content-Disposition": buildAttachmentContentDisposition(file.name),
     "X-Supabytes-Entry-Type": "file",
     "X-Supabytes-Entry-Id": file.id,
     "X-Supabytes-Entry-Path": path,

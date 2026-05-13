@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import {
   buildShareTargetSummary,
+  createFolderPathCache,
   generateShortShareToken,
   listOwnedSharedLinks,
   normalizePathSegments,
@@ -13,11 +14,12 @@ export async function GET() {
   try {
     const { supabase, user } = await requireUser();
     const data = await listOwnedSharedLinks(supabase);
+    const pathCache = await createFolderPathCache(supabase, user.id);
 
     const shares = await Promise.all((data || []).map(async (link) => ({
       ...link,
       url: `/s/${link.short_token}`,
-      target: await buildShareTargetSummary(supabase, user.id, link),
+      target: await buildShareTargetSummary(supabase, user.id, link, pathCache),
     })));
 
     return jsonResponse({ shares });

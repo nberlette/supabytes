@@ -12,6 +12,7 @@ import {
 import {
   ApiRouteError,
   applyMetadataHeaders,
+  buildAttachmentContentDisposition,
   handleRouteError,
   jsonResponse,
   requireUser,
@@ -92,7 +93,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
           status: 200,
           headers: applyMetadataHeaders(new Headers(), {
             "Content-Type": resolvedFile.file.mime_type || "application/octet-stream",
-            "Content-Disposition": `attachment; filename="${resolvedFile.file.name}"`,
+            "Content-Disposition": buildAttachmentContentDisposition(resolvedFile.file.name),
             "X-Supabytes-Entry-Type": "file",
             "X-Supabytes-Entry-Path": resolvedFile.path,
           }),
@@ -148,7 +149,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
         status: 200,
         headers: applyMetadataHeaders(new Headers(), {
           "Content-Type": file.mime_type || "application/octet-stream",
-          "Content-Disposition": `attachment; filename="${file.name}"`,
+          "Content-Disposition": buildAttachmentContentDisposition(file.name),
           "X-Supabytes-Entry-Type": "file",
           "X-Supabytes-Entry-Path": file.name,
         }),
