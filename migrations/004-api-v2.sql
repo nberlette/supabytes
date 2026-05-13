@@ -42,6 +42,7 @@ BEGIN
       WHERE
         short_token = generated_token
         AND id <> share_record.id
+      LIMIT 1
     ) THEN
       generated_token := NULL;
     END IF;
@@ -65,6 +66,7 @@ BEGIN
             shared_links
           WHERE
             short_token = generated_token
+          LIMIT 1
         );
       END LOOP;
     END IF;

@@ -220,13 +220,22 @@ export async function listOwnedSharedLinks(
 
 /**
  * Deduplicates rows returned from join-based shared resource queries.
- * Duplicate ids keep the last row encountered because later Map inserts overwrite earlier ones.
+ * Duplicate ids keep the first row encountered so the result stays stable for
+ * already-ordered query output.
  *
  * @param items Rows that may contain duplicate ids after joining through shared_links.
- * @returns A single row per id, with the last occurrence preserved.
+ * @returns A single row per id, with the first occurrence preserved.
  */
 function uniqueById<T extends { id: string }>(items: T[]) {
-  return Array.from(new Map(items.map((item) => [item.id, item])).values());
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item.id)) {
+      return false;
+    }
+
+    seen.add(item.id);
+    return true;
+  });
 }
 
 export function toApiFolder(folder: DbFolder, path: string): Folder {
