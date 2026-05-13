@@ -16,6 +16,7 @@ CREATE INDEX IF NOT EXISTS idx_shared_links_short_token_lookup ON shared_links(s
 
 DO $$
 DECLARE
+  max_token_attempts CONSTANT INTEGER := 10;
   share_record RECORD;
   generated_token TEXT;
   token_attempts INTEGER;
@@ -49,7 +50,7 @@ BEGIN
       token_attempts := 0;
       LOOP
         token_attempts := token_attempts + 1;
-        IF token_attempts > 10 THEN
+        IF token_attempts > max_token_attempts THEN
           RAISE EXCEPTION 'Failed to generate a unique short_token for shared_links row %', share_record.id;
         END IF;
 

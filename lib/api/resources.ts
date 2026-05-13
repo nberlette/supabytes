@@ -220,6 +220,7 @@ export async function listOwnedSharedLinks(
 
 /**
  * Deduplicates rows returned from join-based shared resource queries.
+ * Duplicate ids keep the last row encountered because later Map inserts overwrite earlier ones.
  *
  * @param items Rows that may contain duplicate ids after joining through shared_links.
  * @returns A single row per id, with the last occurrence preserved.
