@@ -18,6 +18,7 @@ DO $$
 DECLARE
   share_record RECORD;
   generated_token TEXT;
+  token_attempts INTEGER;
 BEGIN
   FOR share_record IN
     SELECT
@@ -41,7 +42,13 @@ BEGIN
         short_token = generated_token
         AND id <> share_record.id
     ) THEN
+      token_attempts := 0;
       LOOP
+        token_attempts := token_attempts + 1;
+        IF token_attempts > 10 THEN
+          RAISE EXCEPTION 'Failed to generate a unique short_token for shared_links row %', share_record.id;
+        END IF;
+
         generated_token := SUBSTRING(
           REPLACE(gen_random_uuid()::text, '-', '')
           FROM 1 FOR 8
@@ -53,7 +60,6 @@ BEGIN
             shared_links
           WHERE
             short_token = generated_token
-            AND id <> share_record.id
         );
       END LOOP;
     END IF;
