@@ -371,7 +371,7 @@ export function FileExplorer({
                   checked={allSelected}
                   onCheckedChange={(checked) => handleSelectAll(checked === true)}
                 />
-                <span>{allSelected ? "All visible selected" : "Select all visible"}</span>
+                <span>{allSelected ? "All selected" : "Select all visible"}</span>
               </label>
 
               {selectedCount > 0 && (
@@ -489,7 +489,7 @@ export function FileExplorer({
                 checked={allSelected}
                 onCheckedChange={(checked) => handleSelectAll(checked === true)}
               />
-              <span>{allSelected ? "All visible selected" : "Select all visible"}</span>
+              <span>{allSelected ? "All selected" : "Select all visible"}</span>
             </label>
 
             {selectedCount > 0 && (

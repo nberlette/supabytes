@@ -8,7 +8,12 @@ import { IBM_Plex_Mono, Merriweather, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
 const siteName = "Supabytes";
-const siteUrl = new URL("https://supabytes.vercel.app");
+const siteUrl = new URL(
+  process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "https://supabytes.vercel.app"),
+);
 const siteDescription =
   "Supabytes is secure cloud storage for uploading, organizing, sharing, and accessing your files from anywhere.";
 
