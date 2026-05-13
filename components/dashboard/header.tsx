@@ -68,25 +68,21 @@ export function Header({
         </Button>
 
         {/* Breadcrumbs */}
-        <Breadcrumb className="hidden sm:flex">
-          <BreadcrumbList>
-            {breadcrumbs.map((item, index, all) => (
+        <Breadcrumb className="hidden min-w-0 sm:flex">
+          <BreadcrumbList className="flex-nowrap overflow-x-auto whitespace-nowrap">
+            {breadcrumbs.map((item, index) => (
               <Fragment key={item.id ?? "root"}>
                 {index > 0 && <BreadcrumbSeparator />}
                 <BreadcrumbItem>
                   {index === breadcrumbs.length - 1
                     ? <BreadcrumbPage>{item.name}</BreadcrumbPage>
                     : (
-                      <BreadcrumbLink
-                        href={"#/" +
-                          all
-                            .slice(0, index + 1)
-                            .map((i) => i.name)
-                            .join("/")}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          onNavigate(item.path);
-                        }}
+                       <BreadcrumbLink
+                         href={item.path ? `#/${item.path}` : "#/"}
+                         onClick={(e) => {
+                           e.preventDefault();
+                           onNavigate(item.path);
+                         }}
                       >
                         {item.name}
                       </BreadcrumbLink>

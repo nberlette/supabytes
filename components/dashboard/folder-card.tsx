@@ -8,6 +8,7 @@ import {
   FolderInput,
   MoreVertical,
   RotateCcw,
+  Share2,
   Star,
   Trash2,
 } from "lucide-react";
@@ -22,6 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { bulkDelete, runBulkOperation } from "@/lib/api/client";
+import { ShareDialog } from "./share-dialog";
 
 interface FolderCardProps {
   folder: Folder;
@@ -45,6 +47,7 @@ export function FolderCard({
   isTrashView,
 }: FolderCardProps) {
   const [isFavorite, setIsFavorite] = useState(folder.is_favorite);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const handleToggleFavorite = async () => {
     const newValue = !isFavorite;
@@ -208,10 +211,14 @@ export function FolderCard({
                       )}
                     />
                     {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem disabled>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Rename
+                    </DropdownMenuItem>
+                   <DropdownMenuItem onClick={() => setShareOpen(true)}>
+                     <Share2 className="mr-2 h-4 w-4" />
+                     Share
+                   </DropdownMenuItem>
+                   <DropdownMenuItem disabled>
+                     <Edit className="mr-2 h-4 w-4" />
+                     Rename
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onMove?.(folder.id)}>
                     <FolderInput className="mr-2 h-4 w-4" />
@@ -229,6 +236,12 @@ export function FolderCard({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <ShareDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        item={{ id: folder.id, name: folder.name, path: folder.path, type: "folder" }}
+      />
     </div>
   );
 }

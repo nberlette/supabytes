@@ -8,6 +8,7 @@ import {
   FolderInput,
   MoreVertical,
   RotateCcw,
+  Share2,
   Star,
   Trash2,
 } from "lucide-react";
@@ -21,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "./confirm-dialog";
+import { ShareDialog } from "./share-dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { bulkDelete, runBulkOperation } from "@/lib/api/client";
@@ -50,6 +52,7 @@ export function FolderRow({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isFavorite, setIsFavorite] = useState(folder.is_favorite);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const handleToggleFavorite = async () => {
     const newValue = !isFavorite;
@@ -213,6 +216,10 @@ export function FolderRow({
                       />
                       {isFavorite ? "Remove Favorite" : "Add to Favorites"}
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShareOpen(true)}>
+                      <Share2 className="mr-2 h-4 w-4" />
+                      Share
+                    </DropdownMenuItem>
                     <DropdownMenuItem disabled>
                       <Edit className="mr-2 h-4 w-4" />
                       Rename
@@ -246,6 +253,12 @@ export function FolderRow({
         onConfirm={isTrashView ? handlePermanentDelete : handleDelete}
         isLoading={isDeleting}
         variant={isTrashView ? "destructive" : "default"}
+      />
+
+      <ShareDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        item={{ id: folder.id, name: folder.name, path: folder.path, type: "folder" }}
       />
     </>
   );

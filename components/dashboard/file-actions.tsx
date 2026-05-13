@@ -120,7 +120,11 @@ export function FileActions({ file, onRefresh, userId }: FileActionsProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <ShareDialog open={shareOpen} onOpenChange={setShareOpen} file={file} />
+      <ShareDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        item={{ id: file.id, name: file.name, path: file.path, type: "file" }}
+      />
 
       <ConfirmDialog
         open={deleteOpen}

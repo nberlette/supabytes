@@ -14,30 +14,35 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Copy, ExternalLink } from "lucide-react";
-import type { FileItem } from "@/lib/types";
+import type { FileItem, Folder } from "@/lib/types";
 import type { ApiSharedLink } from "@/lib/api/contracts";
 import { createShare, deleteShare, listShares } from "@/lib/api/client";
+
+type ShareableItem =
+  | Pick<FileItem, "id" | "name" | "path"> & { type: "file" }
+  | Pick<Folder, "id" | "name" | "path"> & { type: "folder" };
 
 interface ShareDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  file: FileItem;
+  item: ShareableItem;
 }
 
-export function ShareDialog({ open, onOpenChange, file }: ShareDialogProps) {
+export function ShareDialog({ open, onOpenChange, item }: ShareDialogProps) {
   const [sharedLink, setSharedLink] = useState<ApiSharedLink | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (open) {
+      setSharedLink(null);
       fetchExistingLink();
     }
-  }, [open, file.id]);
+  }, [open, item.id, item.path, item.type]);
 
   const fetchExistingLink = async () => {
     const response = await listShares();
     const existing = response.data.shares.find((share) =>
-      share.target_type === "file" && share.target.path === file.path
+      share.target_type === item.type && share.target.path === item.path
     );
 
     if (existing) {
@@ -48,7 +53,11 @@ export function ShareDialog({ open, onOpenChange, file }: ShareDialogProps) {
   const createShareLink = async () => {
     setIsLoading(true);
     try {
-      const response = await createShare({ type: "file", filePath: file.path });
+      const response = await createShare(
+        item.type === "folder"
+          ? { type: "folder", folderPath: item.path }
+          : { type: "file", filePath: item.path },
+      );
       setSharedLink(response.data.share);
       toast.success("Share link created");
     } catch {
@@ -85,9 +94,9 @@ export function ShareDialog({ open, onOpenChange, file }: ShareDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Share File</DialogTitle>
+          <DialogTitle>{item.type === "folder" ? "Share Folder" : "Share File"}</DialogTitle>
           <DialogDescription>
-            Create a public link to share "{file.name}"
+            Create a public link to share "{item.name}"
           </DialogDescription>
         </DialogHeader>
 
@@ -118,7 +127,7 @@ export function ShareDialog({ open, onOpenChange, file }: ShareDialogProps) {
           : (
             <div className="py-4 text-center">
               <p className="text-sm text-slate-600 mb-4">
-                No share link exists for this file yet.
+                {`No share link exists for this ${item.type} yet.`}
               </p>
               <Button onClick={createShareLink} disabled={isLoading}>
                 {isLoading ? "Creating..." : "Create Share Link"}
