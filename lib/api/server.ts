@@ -85,7 +85,7 @@ export function applyMetadataHeaders(
 
 export function buildAttachmentContentDisposition(filename: string) {
   const fallback = filename
-    .replace(/[\u0000-\u001F\u007F]/g, "")
+    .replace(/[\u0000-\u001F\u007F-\u009F]/g, "")
     .replace(/["\\]/g, "\\$&") || "download";
   const encoded = encodeURIComponent(filename).replace(
     /['()*]/g,

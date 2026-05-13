@@ -33,7 +33,7 @@ BEGIN
   LOOP
     generated_token := share_record.short_token;
 
-    IF generated_token IS NULL OR EXISTS (
+    IF generated_token IS NOT NULL AND EXISTS (
       SELECT
         1
       FROM
@@ -42,6 +42,10 @@ BEGIN
         short_token = generated_token
         AND id <> share_record.id
     ) THEN
+      generated_token := NULL;
+    END IF;
+
+    IF generated_token IS NULL THEN
       token_attempts := 0;
       LOOP
         token_attempts := token_attempts + 1;
