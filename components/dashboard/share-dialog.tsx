@@ -12,59 +12,56 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { Copy, ExternalLink } from "lucide-react";
-import type { FileItem, SharedLink } from "@/lib/types";
+import type { FileItem, Folder } from "@/lib/types";
+import type { ApiSharedLink } from "@/lib/api/contracts";
+import { createShare, deleteShare, listShares } from "@/lib/api/client";
+
+type ShareableItem =
+  | Pick<FileItem, "id" | "name" | "path"> & { type: "file" }
+  | Pick<Folder, "id" | "name" | "path"> & { type: "folder" };
 
 interface ShareDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  file: FileItem;
+  item: ShareableItem;
 }
 
-export function ShareDialog({ open, onOpenChange, file }: ShareDialogProps) {
-  const [sharedLink, setSharedLink] = useState<SharedLink | null>(null);
+export function ShareDialog({ open, onOpenChange, item }: ShareDialogProps) {
+  const [sharedLink, setSharedLink] = useState<ApiSharedLink | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (open) {
+      setSharedLink(null);
       fetchExistingLink();
     }
-  }, [open, file.id]);
+  }, [open, item.id, item.path, item.type]);
 
   const fetchExistingLink = async () => {
-    const supabase = createClient();
-    const { data } = await supabase.from("shared_links").select("*").eq(
-      "file_id",
-      file.id,
-    ).single();
+    const response = await listShares();
+    const existing = response.data.shares.find((share) =>
+      share.target_type === item.type && share.target.path === item.path
+    );
 
-    if (data) {
-      setSharedLink(data);
+    if (existing) {
+      setSharedLink(existing);
     }
   };
 
   const createShareLink = async () => {
     setIsLoading(true);
-    const supabase = createClient();
-
-    const token = crypto.randomUUID();
-
-    const { data, error } = await supabase
-      .from("shared_links")
-      .insert({
-        file_id: file.id,
-        token,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      toast.error("Failed to create share link");
-    } else {
-      setSharedLink(data);
+    try {
+      const response = await createShare(
+        item.type === "folder"
+          ? { type: "folder", folderPath: item.path }
+          : { type: "file", filePath: item.path },
+      );
+      setSharedLink(response.data.share);
       toast.success("Share link created");
+    } catch {
+      toast.error("Failed to create share link");
     }
 
     setIsLoading(false);
@@ -73,24 +70,19 @@ export function ShareDialog({ open, onOpenChange, file }: ShareDialogProps) {
   const deleteShareLink = async () => {
     if (!sharedLink) return;
 
-    const supabase = createClient();
-    const { error } = await supabase.from("shared_links").delete().eq(
-      "id",
-      sharedLink.id,
-    );
-
-    if (error) {
-      toast.error("Failed to delete share link");
-    } else {
+    try {
+      await deleteShare(sharedLink.short_token || sharedLink.token);
       setSharedLink(null);
       toast.success("Share link deleted");
+    } catch {
+      toast.error("Failed to delete share link");
     }
   };
 
   const shareUrl = sharedLink
     ? `${
       typeof window !== "undefined" ? window.location.origin : ""
-    }/shared/${sharedLink.token}`
+    }/s/${encodeURIComponent(sharedLink.short_token || sharedLink.token)}`
     : "";
 
   const copyLink = () => {
@@ -102,9 +94,9 @@ export function ShareDialog({ open, onOpenChange, file }: ShareDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Share File</DialogTitle>
+          <DialogTitle>{item.type === "folder" ? "Share Folder" : "Share File"}</DialogTitle>
           <DialogDescription>
-            Create a public link to share "{file.name}"
+            Create a public link to share "{item.name}"
           </DialogDescription>
         </DialogHeader>
 
@@ -135,7 +127,7 @@ export function ShareDialog({ open, onOpenChange, file }: ShareDialogProps) {
           : (
             <div className="py-4 text-center">
               <p className="text-sm text-slate-600 mb-4">
-                No share link exists for this file yet.
+                {`No share link exists for this ${item.type} yet.`}
               </p>
               <Button onClick={createShareLink} disabled={isLoading}>
                 {isLoading ? "Creating..." : "Create Share Link"}

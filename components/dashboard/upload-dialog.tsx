@@ -13,10 +13,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { AlertCircle, CheckCircle2, FileIcon, Upload, X } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { formatFileSize } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
+import { uploadFile } from "@/lib/api/client";
+import { joinLogicalPath } from "@/lib/api/contracts";
 
 interface UploadDialogProps {
   open: boolean;
@@ -83,78 +84,47 @@ export function UploadDialog(
     uploadingRef.current = true;
     setIsUploading(true);
 
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      toast.error("You must be logged in to upload files");
-      uploadingRef.current = false;
-      setIsUploading(false);
-      return;
-    }
-
     const pendingFiles = files.filter((f) => f.status === "pending");
 
-    for (const uploadFile of pendingFiles) {
+    for (const pendingFile of pendingFiles) {
       setFiles((prev) =>
         prev.map((
           f,
-        ) => (f.id === uploadFile.id
+        ) => (f.id === pendingFile.id
           ? { ...f, status: "uploading", progress: 10 }
           : f)
         )
       );
 
-      const storagePath = `${user.id}/${Date.now()}-${uploadFile.file.name}`;
-
-      const { error: uploadError } = await supabase.storage.from("files")
-        .upload(storagePath, uploadFile.file, {
-          cacheControl: "3600",
-          upsert: false,
-        });
-
-      if (uploadError) {
+      try {
+        await uploadFile(
+          joinLogicalPath(currentFolder, pendingFile.file.name),
+          pendingFile.file,
+        );
+        setFiles((prev) =>
+          prev.map((f) => (f.id === pendingFile.id ? { ...f, progress: 70 } : f))
+        );
+      } catch (error) {
         setFiles((prev) =>
           prev.map((
             f,
-          ) => (f.id === uploadFile.id
-            ? { ...f, status: "error", error: uploadError.message }
+          ) => (f.id === pendingFile.id
+            ? {
+              ...f,
+              status: "error",
+              error: error instanceof Error ? error.message : "Upload failed",
+            }
             : f)
           )
         );
         continue;
       }
 
-      setFiles((prev) =>
-        prev.map((f) => (f.id === uploadFile.id ? { ...f, progress: 70 } : f))
-      );
-
-      // Create file record in database
-      const { error: dbError } = await supabase.from("files").insert({
-        name: uploadFile.file.name,
-        storage_path: storagePath,
-        size: uploadFile.file.size,
-        mime_type: uploadFile.file.type || null,
-        folder_id: currentFolder,
-        user_id: user.id,
-      });
-
-      if (dbError) {
+      {
         setFiles((prev) =>
           prev.map((
             f,
-          ) => (f.id === uploadFile.id
-            ? { ...f, status: "error", error: dbError.message }
-            : f)
-          )
-        );
-      } else {
-        setFiles((prev) =>
-          prev.map((
-            f,
-          ) => (f.id === uploadFile.id
+          ) => (f.id === pendingFile.id
             ? { ...f, status: "complete", progress: 100 }
             : f)
           )

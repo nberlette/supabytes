@@ -12,8 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { createFolder } from "@/lib/api/client";
 
 interface CreateFolderDialogProps {
   open: boolean;
@@ -35,33 +35,15 @@ export function CreateFolderDialog(
     }
 
     setIsLoading(true);
-    const supabase = createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      toast.error("You must be logged in to create folders");
-      setIsLoading(false);
-      return;
-    }
-
-    const { error } = await supabase.from("folders").insert({
-      name: name.trim(),
-      parent_id: currentFolder,
-      user_id: user.id,
-    });
-
-    if (error) {
-      toast.error("Failed to create folder");
-    } else {
+    try {
+      await createFolder(currentFolder, name.trim());
       toast.success("Folder created");
       setName("");
       onOpenChange(false);
       onSuccess();
+    } catch {
+      toast.error("Failed to create folder");
     }
-
     setIsLoading(false);
   };
 

@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "./confirm-dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { bulkDelete, runBulkOperation } from "@/lib/api/client";
 
 interface FileRowProps {
   file: FileItem;
@@ -34,32 +35,26 @@ export function FileRow(
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleRestore = async () => {
-    const res = await fetch("/api/files/restore", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fileIds: [file.id], folderIds: [] }),
-    });
-
-    if (res.ok) {
+    try {
+      await runBulkOperation({
+        action: "restore",
+        fileIds: [file.id],
+        folderIds: [],
+      });
       toast.success("File restored");
       onRefresh();
-    } else {
+    } catch {
       toast.error("Failed to restore file");
     }
   };
 
   const handlePermanentDelete = async () => {
     setIsDeleting(true);
-    const res = await fetch("/api/files/permanent-delete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fileIds: [file.id], folderIds: [] }),
-    });
-
-    if (res.ok) {
+    try {
+      await bulkDelete({ fileIds: [file.id], folderIds: [], permanent: true });
       toast.success("File permanently deleted");
       onRefresh();
-    } else {
+    } catch {
       toast.error("Failed to delete file");
     }
     setIsDeleting(false);

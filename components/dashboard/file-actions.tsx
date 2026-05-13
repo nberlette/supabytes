@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { ShareDialog } from "./share-dialog";
 import { ConfirmDialog } from "./confirm-dialog";
 import { cn } from "@/lib/utils";
+import { buildDownloadUrl, deleteFile, runBulkOperation } from "@/lib/api/client";
 
 interface FileActionsProps {
   file: FileItem;
@@ -36,22 +37,17 @@ export function FileActions({ file, onRefresh, userId }: FileActionsProps) {
   const [isFavorite, setIsFavorite] = useState(file.is_favorite);
 
   const handleDownload = () => {
-    window.open(`/api/files/download/${file.id}`, "_blank");
+    window.open(buildDownloadUrl(file.path), "_blank");
   };
 
   const handleDelete = async () => {
     setIsDeleting(true);
 
-    const res = await fetch("/api/files/bulk-delete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fileIds: [file.id], folderIds: [] }),
-    });
-
-    if (res.ok) {
+    try {
+      await deleteFile(file.path);
       toast.success("File moved to trash");
       onRefresh();
-    } else {
+    } catch {
       toast.error("Failed to delete file");
     }
 
@@ -63,13 +59,14 @@ export function FileActions({ file, onRefresh, userId }: FileActionsProps) {
     const newValue = !isFavorite;
     setIsFavorite(newValue);
 
-    const res = await fetch("/api/files/favorite", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fileId: file.id, isFavorite: newValue }),
-    });
-
-    if (!res.ok) {
+    try {
+      await runBulkOperation({
+        action: "favorite",
+        fileIds: [file.id],
+        folderIds: [],
+        favorite: newValue,
+      });
+    } catch {
       setIsFavorite(!newValue);
       toast.error("Failed to update favorite");
     }
@@ -104,7 +101,7 @@ export function FileActions({ file, onRefresh, userId }: FileActionsProps) {
           <DropdownMenuItem
             onClick={() => {
               navigator.clipboard.writeText(
-                `${window.location.origin}/api/files/download/${file.id}`,
+                `${window.location.origin}${buildDownloadUrl(file.path)}`,
               );
               toast.success("Download link copied");
             }}
@@ -123,7 +120,11 @@ export function FileActions({ file, onRefresh, userId }: FileActionsProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <ShareDialog open={shareOpen} onOpenChange={setShareOpen} file={file} />
+      <ShareDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        item={{ id: file.id, name: file.name, path: file.path, type: "file" }}
+      />
 
       <ConfirmDialog
         open={deleteOpen}

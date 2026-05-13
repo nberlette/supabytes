@@ -19,6 +19,7 @@ import { ArrowLeft, LayoutGrid, List, Monitor, Moon, Sun } from "lucide-react";
 import { formatFileSize } from "@/lib/utils/format";
 import { toast } from "sonner";
 import type { UserPreferences } from "@/lib/types";
+import { savePreferences } from "@/lib/api/client";
 
 interface SettingsFormProps {
   userId: string;
@@ -42,21 +43,12 @@ export function SettingsForm(
     setIsSaving(true);
 
     try {
-      const res = await fetch("/api/preferences", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          view_mode: viewMode,
-          theme: theme,
-        }),
+      await savePreferences({
+        view_mode: viewMode,
+        theme: theme as "light" | "dark" | "system",
       });
-
-      if (res.ok) {
-        localStorage.setItem("supabytes-view-mode", viewMode);
-        toast.success("Preferences saved");
-      } else {
-        toast.error("Failed to save preferences");
-      }
+      localStorage.setItem("supabytes-view-mode", viewMode);
+      toast.success("Preferences saved");
     } catch {
       toast.error("Failed to save preferences");
     } finally {

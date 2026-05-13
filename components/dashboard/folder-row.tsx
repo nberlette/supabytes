@@ -8,6 +8,7 @@ import {
   FolderInput,
   MoreVertical,
   RotateCcw,
+  Share2,
   Star,
   Trash2,
 } from "lucide-react";
@@ -21,12 +22,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "./confirm-dialog";
+import { ShareDialog } from "./share-dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { bulkDelete, runBulkOperation } from "@/lib/api/client";
 
 interface FolderRowProps {
   folder: Folder;
-  onNavigate: (folderId: string | null) => void;
+  /** Navigates using the folder's logical path rather than its UUID. */
+  onNavigate: (folderPath: string | null) => void;
   onRefresh: () => void;
   isSelected?: boolean;
   onSelect?: (id: string, selected: boolean) => void;
@@ -48,18 +52,20 @@ export function FolderRow({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isFavorite, setIsFavorite] = useState(folder.is_favorite);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const handleToggleFavorite = async () => {
     const newValue = !isFavorite;
     setIsFavorite(newValue);
 
-    const res = await fetch("/api/files/favorite", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ folderId: folder.id, isFavorite: newValue }),
-    });
-
-    if (!res.ok) {
+    try {
+      await runBulkOperation({
+        action: "favorite",
+        fileIds: [],
+        folderIds: [folder.id],
+        favorite: newValue,
+      });
+    } catch {
       setIsFavorite(!newValue);
       toast.error("Failed to update favorite");
     }
@@ -67,16 +73,11 @@ export function FolderRow({
 
   const handleDelete = async () => {
     setIsDeleting(true);
-    const res = await fetch("/api/files/bulk-delete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fileIds: [], folderIds: [folder.id] }),
-    });
-
-    if (res.ok) {
+    try {
+      await bulkDelete({ fileIds: [], folderIds: [folder.id] });
       toast.success("Folder moved to trash");
       onRefresh();
-    } else {
+    } catch {
       toast.error("Failed to delete folder");
     }
     setIsDeleting(false);
@@ -84,32 +85,26 @@ export function FolderRow({
   };
 
   const handleRestore = async () => {
-    const res = await fetch("/api/files/restore", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fileIds: [], folderIds: [folder.id] }),
-    });
-
-    if (res.ok) {
+    try {
+      await runBulkOperation({
+        action: "restore",
+        fileIds: [],
+        folderIds: [folder.id],
+      });
       toast.success("Folder restored");
       onRefresh();
-    } else {
+    } catch {
       toast.error("Failed to restore folder");
     }
   };
 
   const handlePermanentDelete = async () => {
     setIsDeleting(true);
-    const res = await fetch("/api/files/permanent-delete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fileIds: [], folderIds: [folder.id] }),
-    });
-
-    if (res.ok) {
+    try {
+      await bulkDelete({ fileIds: [], folderIds: [folder.id], permanent: true });
       toast.success("Folder permanently deleted");
       onRefresh();
-    } else {
+    } catch {
       toast.error("Failed to delete folder");
     }
     setIsDeleting(false);
@@ -150,7 +145,7 @@ export function FolderRow({
           "border-b border-border hover:bg-muted/50 transition-colors cursor-pointer",
           isSelected && "bg-primary/5",
         )}
-        onDoubleClick={() => !isTrashView && onNavigate(folder.id)}
+        onDoubleClick={() => !isTrashView && onNavigate(folder.path)}
         onClick={(e) => {
           if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
@@ -208,7 +203,7 @@ export function FolderRow({
                 )
                 : (
                   <>
-                    <DropdownMenuItem onClick={() => onNavigate(folder.id)}>
+                    <DropdownMenuItem onClick={() => onNavigate(folder.path)}>
                       <FolderIcon className="mr-2 h-4 w-4" />
                       Open
                     </DropdownMenuItem>
@@ -220,6 +215,10 @@ export function FolderRow({
                         )}
                       />
                       {isFavorite ? "Remove Favorite" : "Add to Favorites"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShareOpen(true)}>
+                      <Share2 className="mr-2 h-4 w-4" />
+                      Share
                     </DropdownMenuItem>
                     <DropdownMenuItem disabled>
                       <Edit className="mr-2 h-4 w-4" />
@@ -254,6 +253,12 @@ export function FolderRow({
         onConfirm={isTrashView ? handlePermanentDelete : handleDelete}
         isLoading={isDeleting}
         variant={isTrashView ? "destructive" : "default"}
+      />
+
+      <ShareDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        item={{ id: folder.id, name: folder.name, path: folder.path, type: "folder" }}
       />
     </>
   );

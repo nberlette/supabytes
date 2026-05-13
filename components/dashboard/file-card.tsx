@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { buildDownloadUrl, bulkDelete, runBulkOperation } from "@/lib/api/client";
 
 interface FileCardProps {
   file: FileItem;
@@ -51,59 +52,49 @@ export function FileCard({
     const newValue = !isFavorite;
     setIsFavorite(newValue);
 
-    const res = await fetch("/api/files/favorite", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fileId: file.id, isFavorite: newValue }),
-    });
-
-    if (!res.ok) {
+    try {
+      await runBulkOperation({
+        action: "favorite",
+        fileIds: [file.id],
+        folderIds: [],
+        favorite: newValue,
+      });
+    } catch {
       setIsFavorite(!newValue);
       toast.error("Failed to update favorite");
     }
   };
 
   const handleDelete = async () => {
-    const res = await fetch("/api/files/bulk-delete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fileIds: [file.id], folderIds: [] }),
-    });
-
-    if (res.ok) {
+    try {
+      await bulkDelete({ fileIds: [file.id], folderIds: [] });
       toast.success("File moved to trash");
       onRefresh();
-    } else {
+    } catch {
       toast.error("Failed to delete file");
     }
   };
 
   const handleRestore = async () => {
-    const res = await fetch("/api/files/restore", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fileIds: [file.id], folderIds: [] }),
-    });
-
-    if (res.ok) {
+    try {
+      await runBulkOperation({
+        action: "restore",
+        fileIds: [file.id],
+        folderIds: [],
+      });
       toast.success("File restored");
       onRefresh();
-    } else {
+    } catch {
       toast.error("Failed to restore file");
     }
   };
 
   const handlePermanentDelete = async () => {
-    const res = await fetch("/api/files/permanent-delete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fileIds: [file.id], folderIds: [] }),
-    });
-
-    if (res.ok) {
+    try {
+      await bulkDelete({ fileIds: [file.id], folderIds: [], permanent: true });
       toast.success("File permanently deleted");
       onRefresh();
-    } else {
+    } catch {
       toast.error("Failed to delete file");
     }
   };
@@ -196,10 +187,10 @@ export function FileCard({
           )
           : (
             <>
-              <ContextMenuItem
-                onClick={() =>
-                  window.open(`/api/files/download/${file.id}`, "_blank")}
-              >
+                <ContextMenuItem
+                  onClick={() =>
+                    window.open(buildDownloadUrl(file.path), "_blank")}
+                >
                 <Download className="mr-2 h-4 w-4" />
                 Download
               </ContextMenuItem>

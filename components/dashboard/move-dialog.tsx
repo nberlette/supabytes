@@ -10,10 +10,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { createClient } from "@/lib/supabase/client";
 import { ChevronRight, FolderIcon, Home } from "lucide-react";
 import type { Folder } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { fetchFolderView } from "@/lib/api/client";
 
 interface MoveDialogProps {
   open: boolean;
@@ -32,10 +32,6 @@ export function MoveDialog(
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const currentFolderId = currentPath.length > 0
-    ? currentPath[currentPath.length - 1].id
-    : null;
-
   useEffect(() => {
     if (open) {
       fetchFolders(null);
@@ -44,36 +40,30 @@ export function MoveDialog(
     }
   }, [open]);
 
-  async function fetchFolders(parentId: string | null) {
+  async function fetchFolders(parentPath: string | null) {
     setLoading(true);
-    const supabase = createClient();
-
-    const query = supabase.from("folders").select("*").order("name");
-
-    const { data } = parentId
-      ? await query.eq("parent_id", parentId)
-      : await query.is("parent_id", null);
-
-    setFolders((data || []).filter((f) => !excludeFolderIds.includes(f.id)));
+    const response = await fetchFolderView(parentPath, "files");
+    setFolders(
+      response.data.folders.filter((folder) => !excludeFolderIds.includes(folder.id)),
+    );
     setLoading(false);
   }
 
   function navigateToFolder(folder: Folder) {
     setCurrentPath([...currentPath, folder]);
     setSelectedFolder(null);
-    fetchFolders(folder.id);
+    fetchFolders(folder.path);
   }
 
   function navigateUp(index: number) {
     const newPath = currentPath.slice(0, index);
     setCurrentPath(newPath);
     setSelectedFolder(null);
-    fetchFolders(newPath.length > 0 ? newPath[newPath.length - 1].id : null);
+    fetchFolders(newPath.length > 0 ? newPath[newPath.length - 1].path : null);
   }
 
   function handleMove() {
-    // If a folder is selected, move into it; otherwise move to current path
-    const targetId = selectedFolder ?? currentFolderId;
+    const targetId = selectedFolder ?? currentPath.at(-1)?.id ?? null;
     onMove(targetId);
   }
 
