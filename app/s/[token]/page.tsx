@@ -54,7 +54,7 @@ export default async function SharedEntryPage({ params }: PageProps) {
       <div className="min-h-screen bg-background p-6">
         <div className="mx-auto max-w-4xl space-y-6">
           <div className="flex items-center justify-center gap-2">
-            <Cloud className="h-8 w-8 text-primary-foreground" />
+            <Cloud className="h-8 w-8 text-primary" />
             <span className="text-xl font-bold text-foreground">Supabytes</span>
           </div>
 
@@ -136,7 +136,7 @@ export default async function SharedEntryPage({ params }: PageProps) {
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2 mb-8">
-          <Cloud className="h-8 w-8 text-primary-foreground" />
+          <Cloud className="h-8 w-8 text-primary" />
           <span className="text-xl font-bold text-foreground">Supabytes</span>
         </div>
 
@@ -155,7 +155,7 @@ export default async function SharedEntryPage({ params }: PageProps) {
                 Download File
               </Button>
             </Link>
-            <p className="text-xs text-center text-muted-foreground">
+            <p className="text-xs text-center text-muted-foreground pt-4">
               This file has been shared with you via Supabytes
             </p>
           </CardContent>
