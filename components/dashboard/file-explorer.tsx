@@ -288,9 +288,6 @@ export function FileExplorer({
     : currentFolder
     ? "Current folder"
     : "All files";
-  const selectionHint =
-    "Use the checkboxes or Select all visible to choose items quickly. Keyboard shortcuts: Control or Command + A selects everything, Escape clears the current selection.";
-
   if (isLoading) {
     return (
       <div className="flex-1 p-6 overflow-auto">
@@ -386,7 +383,20 @@ export function FileExplorer({
           </div>
 
           <p className="mt-3 text-xs text-muted-foreground" aria-live="polite">
-            {selectionHint}
+            Use the checkboxes or Select all visible to choose items quickly.
+            Keyboard shortcuts:{" "}
+            <kbd className="rounded border border-border bg-card px-1.5 py-0.5 font-sans text-[11px]">
+              Ctrl/Cmd
+            </kbd>{" "}
+            +{" "}
+            <kbd className="rounded border border-border bg-card px-1.5 py-0.5 font-sans text-[11px]">
+              A
+            </kbd>{" "}
+            selects everything, and{" "}
+            <kbd className="rounded border border-border bg-card px-1.5 py-0.5 font-sans text-[11px]">
+              Esc
+            </kbd>{" "}
+            clears the current selection.
           </p>
         </div>
 
@@ -491,7 +501,20 @@ export function FileExplorer({
         </div>
 
         <p className="mt-3 text-xs text-muted-foreground" aria-live="polite">
-          {selectionHint}
+          Use the checkboxes or Select all visible to choose items quickly.
+          Keyboard shortcuts:{" "}
+          <kbd className="rounded border border-border bg-card px-1.5 py-0.5 font-sans text-[11px]">
+            Ctrl/Cmd
+          </kbd>{" "}
+          +{" "}
+          <kbd className="rounded border border-border bg-card px-1.5 py-0.5 font-sans text-[11px]">
+            A
+          </kbd>{" "}
+          selects everything, and{" "}
+          <kbd className="rounded border border-border bg-card px-1.5 py-0.5 font-sans text-[11px]">
+            Esc
+          </kbd>{" "}
+          clears the current selection.
         </p>
       </div>
 
