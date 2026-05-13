@@ -23,7 +23,10 @@ WHERE
 ALTER TABLE
   shared_links
 ALTER COLUMN
-  target_type SET NOT NULL,
+  target_type SET NOT NULL;
+
+ALTER TABLE
+  shared_links
 ALTER COLUMN
   short_token SET NOT NULL;
 
