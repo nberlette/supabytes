@@ -32,7 +32,11 @@ BEGIN
       target_type IS NULL
       OR short_token IS NULL
   LOOP
-    generated_token := share_record.short_token;
+    IF share_record.short_token IS NOT NULL THEN
+      generated_token := share_record.short_token;
+    ELSE
+      generated_token := NULL;
+    END IF;
 
     IF generated_token IS NOT NULL AND EXISTS (
       SELECT
