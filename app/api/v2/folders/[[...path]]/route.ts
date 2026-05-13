@@ -41,21 +41,17 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
     const folders = listing.folders.filter((folder) =>
       !excludedFolderIds.includes(folder.id)
     );
-
+    const { files, folder, breadcrumbs } = listing;
     return jsonResponse(
-      {
-        folder: listing.folder,
-        files: listing.files,
-        folders,
-      },
+      { files, folder, breadcrumbs, folders },
       {
         meta: {
           view,
-          breadcrumbs: listing.breadcrumbs,
+          breadcrumbs,
           counts: {
-            files: listing.files.length,
+            files: files.length,
             folders: folders.length,
-            total: listing.files.length + folders.length,
+            total: files.length + folders.length,
           },
         },
       },
