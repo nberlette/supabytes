@@ -288,6 +288,8 @@ export function FileExplorer({
     : currentFolder
     ? "Current folder"
     : "All files";
+  const selectionHint =
+    "Use the checkboxes or Select all visible to choose items quickly. Keyboard shortcut: Ctrl/Cmd + A selects everything, Esc clears the current selection.";
 
   if (isLoading) {
     return (
@@ -383,10 +385,7 @@ export function FileExplorer({
             </div>
           </div>
 
-          <p className="mt-3 text-xs text-muted-foreground">
-            Tip: use Ctrl/Cmd + A to select everything on screen and Esc to clear
-            the current selection.
-          </p>
+          <p className="mt-3 text-xs text-muted-foreground">{selectionHint}</p>
         </div>
 
         <div
@@ -489,10 +488,7 @@ export function FileExplorer({
           </div>
         </div>
 
-        <p className="mt-3 text-xs text-muted-foreground">
-          Tip: use Ctrl/Cmd + A to select everything on screen and Esc to clear
-          the current selection.
-        </p>
+        <p className="mt-3 text-xs text-muted-foreground">{selectionHint}</p>
       </div>
 
       <div className="flex-1 p-6 overflow-auto">

@@ -1,7 +1,7 @@
 import { ImageResponse } from "@vercel/og";
 
 export const runtime = "edge";
-export const alt = "Supabytes secure file storage";
+export const alt = "Supabytes - Secure file storage";
 export const size = {
   width: 1200,
   height: 630,
