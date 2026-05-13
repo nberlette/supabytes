@@ -27,13 +27,13 @@ export function SelectionToolbar({
   if (selectedCount === 0) return null;
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-      <div className="flex items-center gap-2 bg-popover text-popover-foreground border border-border px-4 py-3 rounded-lg shadow-lg">
-        <span className="text-sm font-medium mr-2">
+    <div className="fixed inset-x-4 bottom-4 z-50 flex justify-center sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:bottom-6">
+      <div className="flex max-w-full flex-wrap items-center justify-center gap-2 rounded-xl border border-border bg-popover px-4 py-3 text-popover-foreground shadow-lg">
+        <span className="mr-2 text-sm font-medium">
           {selectedCount} selected
         </span>
 
-        <div className="h-4 w-px bg-border" />
+        <div className="hidden h-4 w-px bg-border sm:block" />
 
         {isTrashView
           ? (
@@ -80,7 +80,7 @@ export function SelectionToolbar({
             </>
           )}
 
-        <div className="h-4 w-px bg-border" />
+        <div className="hidden h-4 w-px bg-border sm:block" />
 
         <Button
           variant="ghost"

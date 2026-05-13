@@ -102,6 +102,8 @@ export function DashboardShell({ userId, userEmail }: DashboardShellProps) {
           onRefresh={refreshFiles}
           userId={userId}
           currentView={currentView}
+          searchQuery={searchQuery}
+          onClearSearch={() => setSearchQuery("")}
         />
       </div>
     </div>

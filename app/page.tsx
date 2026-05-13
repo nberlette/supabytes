@@ -1,7 +1,17 @@
 import type React from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Cloud, Lock, Share2, Shield, Smartphone, Zap } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Secure file storage and sharing",
+  description:
+    "Upload, organize, and share files with Supabytes from any device with secure, serverless cloud storage.",
+  alternates: {
+    canonical: "/",
+  },
+};
 
 export default function HomePage() {
   return (

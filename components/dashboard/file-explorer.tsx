@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FileItem, Folder } from "@/lib/types";
 import { FileCard } from "./file-card";
 import { FolderCard } from "./folder-card";
@@ -12,6 +12,7 @@ import { MoveDialog } from "./move-dialog";
 import { ConfirmDialog } from "./confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { buildDownloadUrl, bulkDelete, runBulkOperation } from "@/lib/api/client";
 
@@ -25,6 +26,8 @@ interface FileExplorerProps {
   onRefresh: () => void;
   userId: string;
   currentView?: "files" | "shared" | "trash" | "favorites";
+  searchQuery?: string;
+  onClearSearch?: () => void;
 }
 
 export function FileExplorer({
@@ -37,6 +40,8 @@ export function FileExplorer({
   onRefresh,
   userId,
   currentView = "files",
+  searchQuery = "",
+  onClearSearch,
 }: FileExplorerProps) {
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [selectedFolders, setSelectedFolders] = useState<Set<string>>(
@@ -55,6 +60,21 @@ export function FileExplorer({
 
   const selectedCount = selectedFiles.size + selectedFolders.size;
   const isTrashView = currentView === "trash";
+  const totalItems = files.length + folders.length;
+  const hasSearch = searchQuery.trim().length > 0;
+  const itemSummary = useMemo(() => {
+    const parts = [];
+
+    if (folders.length > 0) {
+      parts.push(`${folders.length} folder${folders.length === 1 ? "" : "s"}`);
+    }
+
+    if (files.length > 0) {
+      parts.push(`${files.length} file${files.length === 1 ? "" : "s"}`);
+    }
+
+    return parts.join(" • ");
+  }, [files.length, folders.length]);
 
   const handleFileSelect = useCallback((id: string, selected: boolean) => {
     setSelectedFiles((prev) => {
@@ -97,6 +117,32 @@ export function FileExplorer({
     setSelectedFiles(new Set());
     setSelectedFolders(new Set());
   }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        (target.isContentEditable ||
+          ["INPUT", "SELECT", "TEXTAREA"].includes(target.tagName))
+      ) {
+        return;
+      }
+
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "a") {
+        if (totalItems === 0) return;
+        event.preventDefault();
+        handleSelectAll(true);
+      }
+
+      if (event.key === "Escape" && selectedCount > 0) {
+        clearSelection();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [clearSelection, handleSelectAll, selectedCount, totalItems]);
 
   const handleDropOnFolder = useCallback(
     async (targetFolderId: string, item: { type: string; id: string }) => {
@@ -231,6 +277,18 @@ export function FileExplorer({
     selectedFiles.size === files.length &&
     selectedFolders.size === folders.length;
 
+  const explorerHeading = hasSearch
+    ? `Results for “${searchQuery}”`
+    : currentView === "trash"
+    ? "Trash"
+    : currentView === "shared"
+    ? "Shared items"
+    : currentView === "favorites"
+    ? "Favorites"
+    : currentFolder
+    ? "Current folder"
+    : "All files";
+
   if (isLoading) {
     return (
       <div className="flex-1 p-6 overflow-auto">
@@ -254,6 +312,32 @@ export function FileExplorer({
   }
 
   if (files.length === 0 && folders.length === 0) {
+    if (hasSearch) {
+      return (
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="max-w-md text-center space-y-3">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted text-2xl">
+              🔎
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-lg font-semibold text-foreground">
+                No matches found
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Try a different search or clear the current filter to see all
+                files and folders again.
+              </p>
+            </div>
+            {onClearSearch && (
+              <Button variant="outline" onClick={onClearSearch}>
+                Clear search
+              </Button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <EmptyState
         currentFolder={currentFolder}
@@ -270,6 +354,41 @@ export function FileExplorer({
   if (viewMode === "grid") {
     return (
       <>
+        <div className="border-b border-border bg-background/95 px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-foreground">
+                {explorerHeading}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {itemSummary}
+                {selectedCount > 0 && ` • ${selectedCount} selected`}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground">
+                <Checkbox
+                  checked={allSelected}
+                  onCheckedChange={(checked) => handleSelectAll(checked === true)}
+                />
+                <span>{allSelected ? "All visible selected" : "Select all visible"}</span>
+              </label>
+
+              {selectedCount > 0 && (
+                <Button variant="ghost" size="sm" onClick={clearSelection}>
+                  Clear selection
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <p className="mt-3 text-xs text-muted-foreground">
+            Tip: use Ctrl/Cmd + A to select everything on screen and Esc to clear
+            the current selection.
+          </p>
+        </div>
+
         <div
           className="flex-1 p-6 overflow-auto"
           onDragOver={(e) => e.preventDefault()}
@@ -341,6 +460,41 @@ export function FileExplorer({
 
   return (
     <>
+      <div className="border-b border-border bg-background/95 px-6 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-foreground">
+              {explorerHeading}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {itemSummary}
+              {selectedCount > 0 && ` • ${selectedCount} selected`}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground">
+              <Checkbox
+                checked={allSelected}
+                onCheckedChange={(checked) => handleSelectAll(checked === true)}
+              />
+              <span>{allSelected ? "All visible selected" : "Select all visible"}</span>
+            </label>
+
+            {selectedCount > 0 && (
+              <Button variant="ghost" size="sm" onClick={clearSelection}>
+                Clear selection
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <p className="mt-3 text-xs text-muted-foreground">
+          Tip: use Ctrl/Cmd + A to select everything on screen and Esc to clear
+          the current selection.
+        </p>
+      </div>
+
       <div className="flex-1 p-6 overflow-auto">
         <div className="bg-card rounded-lg border border-border overflow-hidden">
           <table className="w-full">
